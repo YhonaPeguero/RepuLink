@@ -1,12 +1,12 @@
 [package]
-name = "vault"
+name = "repulink"
 version = "0.1.0"
-description = "A simple SOL vault program"
+description = "RepuLink — a portable on-chain reputation system for freelancers"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "vault"
+name = "repulink"
 
 [features]
 default = []
