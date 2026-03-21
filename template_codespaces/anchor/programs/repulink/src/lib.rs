@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("2HgGGNGESEYDKd9MmYye5cAte3VhhoooKVJTEs8oEh2Q");
+declare_id!("EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw");
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MAX_USERNAME_LEN: usize = 32;
