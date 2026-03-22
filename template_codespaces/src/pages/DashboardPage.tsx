@@ -66,7 +66,7 @@ export function DashboardPage() {
       <Layout>
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <p className="text-base text-muted">Connect your wallet to access your dashboard.</p>
-          
+          <a
             href="/"
             className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
           >
@@ -104,7 +104,7 @@ export function DashboardPage() {
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">Your profile</p>
             {walletAddress && (
-              
+              <a
                 href={`/${walletAddress}`}
                 className="text-xs text-muted underline underline-offset-2 hover:text-foreground transition"
               >

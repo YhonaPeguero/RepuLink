@@ -63,7 +63,7 @@ export function ApproveBadgePage() {
               {txStatus}
             </h1>
             {txSignature && (
-              
+              <a
                 href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
                 target="_blank"
                 rel="noreferrer"

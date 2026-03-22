@@ -51,7 +51,7 @@ export function CreateBadgePage() {
           <p className="text-base text-muted">
             Connect your wallet to create a badge.
           </p>
-          
+          <a
             href="/"
             className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
           >
@@ -68,7 +68,7 @@ export function CreateBadgePage() {
 
         {/* Header */}
         <div className="space-y-1">
-          
+          <a
             href="/dashboard"
             className="text-xs text-muted hover:text-foreground transition underline underline-offset-2"
           >
@@ -175,7 +175,7 @@ export function CreateBadgePage() {
             <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm">
               <p>{txStatus}</p>
               {txSignature && (
-                
+                <a
                   href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
                   target="_blank"
                   rel="noreferrer"

@@ -47,7 +47,7 @@ export function PublicProfilePage() {
           <p className="text-sm text-muted">
             This wallet doesn't have a RepuLink profile yet.
           </p>
-          
+          <a
             href="/"
             className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
           >

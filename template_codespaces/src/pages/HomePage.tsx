@@ -43,7 +43,7 @@ export function HomePage() {
             </div>
           </div>
         ) : (
-          
+          <a
             href="/dashboard"
             className="rounded-xl bg-foreground px-8 py-3 text-sm font-medium text-background transition hover:opacity-90"
           >
