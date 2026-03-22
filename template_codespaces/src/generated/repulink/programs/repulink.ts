@@ -18,13 +18,17 @@ import {
 } from "@solana/kit";
 import {
   parseApproveBadgeInstruction,
+  parseCloseProfileInstruction,
   parseCreateBadgeInstruction,
   parseInitializeProfileInstruction,
   parseRejectBadgeInstruction,
+  parseUpdateProfileInstruction,
   type ParsedApproveBadgeInstruction,
+  type ParsedCloseProfileInstruction,
   type ParsedCreateBadgeInstruction,
   type ParsedInitializeProfileInstruction,
   type ParsedRejectBadgeInstruction,
+  type ParsedUpdateProfileInstruction,
 } from "../instructions";
 
 export const REPULINK_PROGRAM_ADDRESS =
@@ -68,9 +72,11 @@ export function identifyRepulinkAccount(
 
 export enum RepulinkInstruction {
   ApproveBadge,
+  CloseProfile,
   CreateBadge,
   InitializeProfile,
   RejectBadge,
+  UpdateProfile,
 }
 
 export function identifyRepulinkInstruction(
@@ -87,6 +93,17 @@ export function identifyRepulinkInstruction(
     )
   ) {
     return RepulinkInstruction.ApproveBadge;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([167, 36, 181, 8, 136, 158, 46, 207]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.CloseProfile;
   }
   if (
     containsBytes(
@@ -121,6 +138,17 @@ export function identifyRepulinkInstruction(
   ) {
     return RepulinkInstruction.RejectBadge;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([98, 67, 99, 206, 86, 115, 175, 1]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.UpdateProfile;
+  }
   throw new Error(
     "The provided instruction could not be identified as a repulink instruction.",
   );
@@ -133,6 +161,9 @@ export type ParsedRepulinkInstruction<
       instructionType: RepulinkInstruction.ApproveBadge;
     } & ParsedApproveBadgeInstruction<TProgram>)
   | ({
+      instructionType: RepulinkInstruction.CloseProfile;
+    } & ParsedCloseProfileInstruction<TProgram>)
+  | ({
       instructionType: RepulinkInstruction.CreateBadge;
     } & ParsedCreateBadgeInstruction<TProgram>)
   | ({
@@ -140,7 +171,10 @@ export type ParsedRepulinkInstruction<
     } & ParsedInitializeProfileInstruction<TProgram>)
   | ({
       instructionType: RepulinkInstruction.RejectBadge;
-    } & ParsedRejectBadgeInstruction<TProgram>);
+    } & ParsedRejectBadgeInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.UpdateProfile;
+    } & ParsedUpdateProfileInstruction<TProgram>);
 
 export function parseRepulinkInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -152,6 +186,13 @@ export function parseRepulinkInstruction<TProgram extends string>(
       return {
         instructionType: RepulinkInstruction.ApproveBadge,
         ...parseApproveBadgeInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.CloseProfile: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.CloseProfile,
+        ...parseCloseProfileInstruction(instruction),
       };
     }
     case RepulinkInstruction.CreateBadge: {
@@ -173,6 +214,13 @@ export function parseRepulinkInstruction<TProgram extends string>(
       return {
         instructionType: RepulinkInstruction.RejectBadge,
         ...parseRejectBadgeInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.UpdateProfile: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.UpdateProfile,
+        ...parseUpdateProfileInstruction(instruction),
       };
     }
     default:

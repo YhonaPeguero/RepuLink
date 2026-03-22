@@ -2,9 +2,15 @@ import { useState } from "react";
 import { useWalletConnection } from "@solana/react-hooks";
 import { Layout } from "../components/layout/Layout";
 import { useRepulink } from "../hooks/useRepulink";
+import { useOnChainData } from "../hooks/useOnChainData";
+import { type Address } from "@solana/kit";
 
 export function CreateBadgePage() {
-  const { status } = useWalletConnection();
+  const { status, wallet } = useWalletConnection();
+  const walletAddress = wallet?.account.address as Address | undefined;
+  const { profile } = useOnChainData(walletAddress);
+  const badgeIndex = profile?.badgeCount ?? 0;
+
   const { createBadge, isSending } = useRepulink();
 
   const [form, setForm] = useState({
@@ -15,6 +21,7 @@ export function CreateBadgePage() {
   });
   const [txStatus, setTxStatus] = useState<string | null>(null);
   const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [approvalLink, setApprovalLink] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -24,14 +31,18 @@ export function CreateBadgePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      setTxStatus("Creating badge...");
-      setTxSignature(null);
 
-      // Badge index 0 for now — DashboardPage will pass the real index
-      const sig = await createBadge(form, 0);
+    try {
+      setTxStatus("Sending request...");
+      setTxSignature(null);
+      setApprovalLink(null);
+
+      const sig = await createBadge(form, badgeIndex);
       setTxSignature(sig ?? null);
-      setTxStatus("Badge created successfully!");
+      setTxStatus("Request sent! Share this link with your client:");
+      setApprovalLink(
+        `${window.location.origin}/approve/${walletAddress}/${badgeIndex}`
+      );
       setForm({ title: "", description: "", clientName: "", clientEmail: "" });
     } catch (err: any) {
       setTxStatus(`Error: ${err.message}`);
@@ -47,10 +58,11 @@ export function CreateBadgePage() {
   if (status !== "connected") {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <div className="flex flex-col items-center justify-center gap-4 py-24">
           <p className="text-base text-muted">
-            Connect your wallet to create a badge.
+            Connect your wallet to send an endorsement request.
           </p>
+
           <a
             href="/"
             className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
@@ -64,35 +76,35 @@ export function CreateBadgePage() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-xl flex flex-col gap-8">
-
-        {/* Header */}
+      <div className="mx-auto flex max-w-xl flex-col gap-8">
         <div className="space-y-1">
           <a
             href="/dashboard"
-            className="text-xs text-muted hover:text-foreground transition underline underline-offset-2"
+            className="text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
           >
             ← Back to dashboard
           </a>
+
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Create a badge
+            Request an endorsement
           </h1>
           <p className="text-sm text-muted">
-            Describe the project and the client who will verify it.
+            Send your client a verification request. They'll receive a link to
+            confirm your work on-chain.
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-
-          {/* Project info */}
           <fieldset className="rounded-2xl border border-border-low bg-card p-5 space-y-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
               Project
             </legend>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="title">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="title"
+              >
                 Title
               </label>
               <input
@@ -109,7 +121,10 @@ export function CreateBadgePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="description">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="description"
+              >
                 Description
               </label>
               <textarea
@@ -129,14 +144,16 @@ export function CreateBadgePage() {
             </div>
           </fieldset>
 
-          {/* Client info */}
           <fieldset className="rounded-2xl border border-border-low bg-card p-5 space-y-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-              Client
+              Who to send the request to
             </legend>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="clientName">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="clientName"
+              >
                 Full name
               </label>
               <input
@@ -153,7 +170,10 @@ export function CreateBadgePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="clientEmail">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="clientEmail"
+              >
                 Email
               </label>
               <input
@@ -170,16 +190,41 @@ export function CreateBadgePage() {
             </div>
           </fieldset>
 
-          {/* Status */}
           {txStatus && (
-            <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm">
+            <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm space-y-3">
               <p>{txStatus}</p>
+
+              {approvalLink && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 rounded-lg border border-border-low bg-card px-3 py-2">
+                    <p className="flex-1 truncate font-mono text-xs text-muted">
+                      {approvalLink}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(approvalLink)}
+                      className="text-xs font-medium underline underline-offset-2 transition hover:text-foreground"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Send this link to your client so they can endorse your work
+                    on-chain.
+                  </p>
+                </div>
+              )}
+
               {txSignature && (
                 <a
-                  href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                  href={
+                    "https://explorer.solana.com/tx/" +
+                    txSignature +
+                    "?cluster=devnet"
+                  }
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 inline-block text-xs underline underline-offset-2 text-muted hover:text-foreground transition"
+                  className="inline-block text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
                 >
                   View on Solana Explorer →
                 </a>
@@ -187,13 +232,12 @@ export function CreateBadgePage() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isSending || !isFormValid}
             className="w-full rounded-xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
           >
-            {isSending ? "Confirming..." : "Create badge"}
+            {isSending ? "Confirming..." : "Send request"}
           </button>
         </form>
       </div>

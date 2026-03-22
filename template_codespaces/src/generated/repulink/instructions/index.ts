@@ -7,6 +7,8 @@
  */
 
 export * from "./approveBadge";
+export * from "./closeProfile";
 export * from "./createBadge";
 export * from "./initializeProfile";
 export * from "./rejectBadge";
+export * from "./updateProfile";

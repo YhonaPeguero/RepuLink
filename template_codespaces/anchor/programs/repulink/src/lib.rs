@@ -137,6 +137,22 @@ pub mod repulink {
 
         Ok(())
     }
+
+    /// Updates the username of an existing FreelancerProfile.
+    pub fn update_profile(ctx: Context<UpdateProfile>, username: String) -> Result<()> {
+        require!(
+            !username.is_empty() && username.len() <= MAX_USERNAME_LEN,
+            RepulinkError::InvalidUsername
+        );
+
+        ctx.accounts.profile.username = username;
+        Ok(())
+    }
+
+    /// Closes the FreelancerProfile PDA and returns rent to the owner.
+    pub fn close_profile(_ctx: Context<CloseProfile>) -> Result<()> {
+        Ok(())
+    }
 }
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
@@ -200,6 +216,34 @@ pub struct ReviewBadge<'info> {
     pub badge: Account<'info, Badge>,
 }
 
+#[derive(Accounts)]
+pub struct UpdateProfile<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"profile", owner.key().as_ref()],
+        bump = profile.bump,
+        has_one = owner,
+    )]
+    pub profile: Account<'info, FreelancerProfile>,
+}
+
+#[derive(Accounts)]
+pub struct CloseProfile<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        mut,
+        close = owner,
+        seeds = [b"profile", owner.key().as_ref()],
+        bump = profile.bump,
+        has_one = owner,
+    )]
+    pub profile: Account<'info, FreelancerProfile>,
+}
 // ── State ─────────────────────────────────────────────────────────────────────
 
 #[account]
