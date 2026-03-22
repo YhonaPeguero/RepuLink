@@ -1,29 +1,34 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "../components/layout/Layout";
 import { BadgeList } from "../components/badge/BadgeList";
-import { type BadgeWithPda, type FreelancerProfile } from "../types/repulink";
+import { useOnChainData } from "../hooks/useOnChainData";
+import { type Address } from "@solana/kit";
 
 export function PublicProfilePage() {
   const pathParts = window.location.pathname.split("/");
-  const walletAddress = pathParts[1];
+  const walletAddress = pathParts[1] as Address;
 
-  const [profile, setProfile] = useState<FreelancerProfile | null>(null);
-  const [badges, setBadges] = useState<BadgeWithPda[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { profile, badges, isLoading, error } = useOnChainData(
+    walletAddress || undefined
+  );
+
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!walletAddress) {
+    if (!isLoading && !profile) {
       setNotFound(true);
-      setIsLoading(false);
+    } else {
+      setNotFound(false);
     }
-  }, [walletAddress]);
+  }, [isLoading, profile]);
+
+  const approvedBadges = badges.filter((b) => "approved" in b.account.status);
 
   if (isLoading) {
     return (
       <Layout>
         <div className="flex flex-col gap-8">
-          <div className="h-24 animate-pulse rounded-2xl border border-border-low bg-card" />
+          <div className="h-32 animate-pulse rounded-2xl border border-border-low bg-card" />
           <div className="grid gap-4 sm:grid-cols-2">
             {[...Array(4)].map((_, i) => (
               <div
@@ -47,6 +52,7 @@ export function PublicProfilePage() {
           <p className="text-sm text-muted">
             This wallet doesn't have a RepuLink profile yet.
           </p>
+
           <a
             href="/"
             className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
@@ -57,8 +63,6 @@ export function PublicProfilePage() {
       </Layout>
     );
   }
-
-  const approvedBadges = badges.filter((b) => "approved" in b.account.status);
 
   return (
     <Layout>
@@ -83,12 +87,14 @@ export function PublicProfilePage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {[
               { label: "Total badges", value: badges.length },
-              { label: "Verified badges", value: approvedBadges.length },
+              { label: "Verified", value: approvedBadges.length },
               {
                 label: "Verification rate",
                 value:
                   badges.length > 0
-                    ? `${Math.round((approvedBadges.length / badges.length) * 100)}%`
+                    ? Math.round(
+                        (approvedBadges.length / badges.length) * 100
+                      ) + "%"
                     : "—",
               },
             ].map((stat) => (
@@ -106,7 +112,6 @@ export function PublicProfilePage() {
             ))}
           </div>
 
-          {/* Verified on Solana */}
           <div className="flex w-fit items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
             <span className="h-2 w-2 rounded-full bg-green-500" />
             <p className="text-xs font-medium text-green-700">
@@ -114,6 +119,13 @@ export function PublicProfilePage() {
             </p>
           </div>
         </section>
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Badges */}
         <section className="space-y-4">
