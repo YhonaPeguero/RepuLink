@@ -4,6 +4,18 @@ import { Layout } from "../components/layout/Layout";
 import { useRepulink } from "../hooks/useRepulink";
 import { useOnChainData } from "../hooks/useOnChainData";
 import { type Address } from "@solana/kit";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { ArrowLeft, Send, Copy, AlertCircle, Sparkles, User, Mail, Briefcase, FileText, ArrowRight } from "lucide-react";
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+};
 
 export function CreateBadgePage() {
   const { status, wallet } = useWalletConnection();
@@ -58,17 +70,20 @@ export function CreateBadgePage() {
   if (status !== "connected") {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center gap-4 py-24">
-          <p className="text-base text-muted">
-            Connect your wallet to send an endorsement request.
-          </p>
+        <div className="flex flex-col items-center justify-center gap-6 py-32">
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-2 animate-pulse">
+                <AlertCircle className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-lg text-muted">
+                Connect your wallet to send an endorsement request.
+            </p>
 
-          <a
-            href="/"
-            className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
-          >
-            Go to home
-          </a>
+            <a
+                href="/"
+                className="group flex items-center gap-2 rounded-xl bg-foreground px-6 py-3 text-sm font-bold text-background transition-transform hover:scale-105"
+            >
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Go to home
+            </a>
         </div>
       </Layout>
     );
@@ -76,171 +91,215 @@ export function CreateBadgePage() {
 
   return (
     <Layout>
-      <div className="mx-auto flex max-w-xl flex-col gap-8">
-        <div className="space-y-1">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="mx-auto flex max-w-2xl flex-col gap-8"
+      >
+        <motion.div variants={itemVariants} className="space-y-2">
           <a
             href="/dashboard"
-            className="text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-foreground mb-4"
           >
-            ← Back to dashboard
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to dashboard
           </a>
 
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Request an endorsement
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground flex items-center gap-3">
+             Request an endorsement
           </h1>
-          <p className="text-sm text-muted">
+          <p className="text-base text-muted max-w-xl">
             Send your client a verification request. They'll receive a link to
-            confirm your work on-chain.
+            confirm your work on-chain, creating a soulbound badge for your profile.
           </p>
-        </div>
+        </motion.div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <fieldset className="rounded-2xl border border-border-low bg-card p-5 space-y-4">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-              Project
-            </legend>
+        <motion.form variants={itemVariants} onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
+              {/* Project Details */}
+              <fieldset className="rounded-3xl glass-panel p-6 sm:p-8 space-y-6 md:col-span-2">
+                <legend className="px-2 text-sm font-bold uppercase tracking-widest text-primary-light flex items-center gap-2 -ml-2 mb-2">
+                  <Briefcase className="h-4 w-4" /> Project Details
+                </legend>
 
-            <div className="space-y-1.5">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="title"
-              >
-                Title
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                placeholder="e.g. Landing page for SaaS startup"
-                value={form.title}
-                onChange={handleChange}
-                maxLength={64}
-                required
-                className="w-full rounded-lg border border-border-low bg-card px-4 py-2.5 text-sm outline-none transition placeholder:text-muted focus:border-foreground/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="description"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Describe what you built and your contribution..."
-                value={form.description}
-                onChange={handleChange}
-                maxLength={256}
-                rows={4}
-                required
-                className="w-full resize-none rounded-lg border border-border-low bg-card px-4 py-2.5 text-sm outline-none transition placeholder:text-muted focus:border-foreground/30"
-              />
-              <p className="text-right text-xs text-muted">
-                {form.description.length}/256
-              </p>
-            </div>
-          </fieldset>
-
-          <fieldset className="rounded-2xl border border-border-low bg-card p-5 space-y-4">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-              Who to send the request to
-            </legend>
-
-            <div className="space-y-1.5">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="clientName"
-              >
-                Full name
-              </label>
-              <input
-                id="clientName"
-                name="clientName"
-                type="text"
-                placeholder="e.g. Jane Smith"
-                value={form.clientName}
-                onChange={handleChange}
-                maxLength={64}
-                required
-                className="w-full rounded-lg border border-border-low bg-card px-4 py-2.5 text-sm outline-none transition placeholder:text-muted focus:border-foreground/30"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="clientEmail"
-              >
-                Email
-              </label>
-              <input
-                id="clientEmail"
-                name="clientEmail"
-                type="email"
-                placeholder="e.g. jane@company.com"
-                value={form.clientEmail}
-                onChange={handleChange}
-                maxLength={128}
-                required
-                className="w-full rounded-lg border border-border-low bg-card px-4 py-2.5 text-sm outline-none transition placeholder:text-muted focus:border-foreground/30"
-              />
-            </div>
-          </fieldset>
-
-          {txStatus && (
-            <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm space-y-3">
-              <p>{txStatus}</p>
-
-              {approvalLink && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 rounded-lg border border-border-low bg-card px-3 py-2">
-                    <p className="flex-1 truncate font-mono text-xs text-muted">
-                      {approvalLink}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(approvalLink)}
-                      className="text-xs font-medium underline underline-offset-2 transition hover:text-foreground"
-                    >
-                      Copy
-                    </button>
+                  <label
+                    className="text-sm font-bold text-foreground/90 ml-1 block"
+                    htmlFor="title"
+                  >
+                    Role or Title
+                  </label>
+                  <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+                          <FileText className="h-4 w-4" />
+                      </div>
+                      <input
+                        id="title"
+                        name="title"
+                        type="text"
+                        placeholder="e.g. Lead Frontend Developer"
+                        value={form.title}
+                        onChange={handleChange}
+                        maxLength={64}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base outline-none transition-all placeholder:text-muted focus:border-primary/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(153,69,255,0.1)] text-white"
+                      />
                   </div>
-                  <p className="text-xs text-muted">
-                    Send this link to your client so they can endorse your work
-                    on-chain.
-                  </p>
                 </div>
-              )}
 
-              {txSignature && (
-                <a
-                  href={
-                    "https://explorer.solana.com/tx/" +
-                    txSignature +
-                    "?cluster=devnet"
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-block text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
+                <div className="space-y-2">
+                  <label
+                    className="text-sm font-bold text-foreground/90 ml-1 flex justify-between items-center"
+                    htmlFor="description"
+                  >
+                    <span>Description</span>
+                    <span className="text-xs font-medium text-muted">{form.description.length}/256</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe what you built, the tech stack used, and your specific contributions..."
+                    value={form.description}
+                    onChange={handleChange}
+                    maxLength={256}
+                    rows={4}
+                    required
+                    className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-4 text-sm sm:text-base outline-none transition-all placeholder:text-muted focus:border-primary/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(153,69,255,0.1)] text-white"
+                  />
+                </div>
+              </fieldset>
+
+              {/* Client Details */}
+              <fieldset className="rounded-3xl glass-panel p-6 sm:p-8 space-y-6 md:col-span-2">
+                <legend className="px-2 text-sm font-bold uppercase tracking-widest text-primary-light flex items-center gap-2 -ml-2 mb-2">
+                  <User className="h-4 w-4" /> Client Details
+                </legend>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-2">
+                    <label
+                        className="text-sm font-bold text-foreground/90 ml-1 block"
+                        htmlFor="clientName"
+                    >
+                        Full Name
+                    </label>
+                    <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+                            <User className="h-4 w-4" />
+                        </div>
+                        <input
+                            id="clientName"
+                            name="clientName"
+                            type="text"
+                            placeholder="e.g. Jane Smith"
+                            value={form.clientName}
+                            onChange={handleChange}
+                            maxLength={64}
+                            required
+                            className="w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base outline-none transition-all placeholder:text-muted focus:border-primary/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(153,69,255,0.1)] text-white"
+                        />
+                    </div>
+                    </div>
+
+                    <div className="space-y-2">
+                    <label
+                        className="text-sm font-bold text-foreground/90 ml-1 block"
+                        htmlFor="clientEmail"
+                    >
+                        Email Address
+                    </label>
+                    <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+                            <Mail className="h-4 w-4" />
+                        </div>
+                        <input
+                            id="clientEmail"
+                            name="clientEmail"
+                            type="email"
+                            placeholder="e.g. jane@company.com"
+                            value={form.clientEmail}
+                            onChange={handleChange}
+                            maxLength={128}
+                            required
+                            className="w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base outline-none transition-all placeholder:text-muted focus:border-primary/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(153,69,255,0.1)] text-white"
+                        />
+                    </div>
+                    </div>
+                </div>
+              </fieldset>
+          </div>
+
+          <AnimatePresence>
+            {txStatus && (
+                <motion.div 
+                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, height: "auto", scale: 1 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                    className="rounded-3xl border border-primary/30 bg-primary/10 p-6 space-y-4 shadow-[0_0_30px_rgba(153,69,255,0.15)] relative overflow-hidden"
                 >
-                  View on Solana Explorer →
-                </a>
-              )}
-            </div>
-          )}
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-light via-primary to-primary-light animate-pulse" />
+                
+                <p className="font-medium text-primary-light flex items-center gap-2">
+                    {isSending && <Sparkles className="h-4 w-4 animate-spin" />}
+                    {txStatus}
+                </p>
+
+                {approvalLink && (
+                    <div className="space-y-3 mt-2">
+                        <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-background/50 p-2 backdrop-blur-sm">
+                            <p className="flex-1 truncate font-mono text-sm text-white/90 px-2 select-all">
+                            {approvalLink}
+                            </p>
+                            <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(approvalLink)}
+                            className="group flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary-light px-4 py-2 text-sm font-bold text-white transition-all shadow-[0_0_15px_rgba(153,69,255,0.4)]"
+                            >
+                            <Copy className="h-4 w-4 group-hover:scale-110 transition-transform" /> Copy
+                            </button>
+                        </div>
+                        <p className="text-sm text-primary-light/80">
+                            Send this link directly to your client. They can approve it instantly (no wallet required).
+                        </p>
+                    </div>
+                )}
+
+                {txSignature && (
+                    <a
+                    href={
+                        "https://explorer.solana.com/tx/" +
+                        txSignature +
+                        "?cluster=devnet"
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline underline-offset-4 transition hover:text-primary-light mt-4"
+                    >
+                    View Transaction on Solana Explorer <ArrowRight className="h-3 w-3" />
+                    </a>
+                )}
+                </motion.div>
+            )}
+          </AnimatePresence>
 
           <button
             type="submit"
             disabled={isSending || !isFormValid}
-            className="w-full rounded-xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+            className="group relative w-full flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-foreground px-6 py-4 text-base font-bold text-background transition-all hover:scale-[1.01] active:scale-95 disabled:pointer-events-none disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] mt-2"
           >
-            {isSending ? "Confirming..." : "Send request"}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <span className="relative z-10 flex items-center gap-2">
+                {isSending ? (
+                    "Sending Request..."
+                ) : (
+                    <>
+                        Send Endorsement Request <Send className="h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </>
+                )}
+            </span>
           </button>
-        </form>
-      </div>
+        </motion.form>
+      </motion.div>
     </Layout>
   );
 }

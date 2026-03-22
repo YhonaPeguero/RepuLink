@@ -8,6 +8,8 @@ import { useOnChainData } from "../hooks/useOnChainData";
 import { type BadgeWithPda } from "../types/repulink";
 import { type Address } from "@solana/kit";
 import { ReputationCard } from "../components/profile/ReputationCard";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, AlertCircle, ArrowRight } from "lucide-react";
 
 export function DashboardPage() {
     const { wallet, status } = useWalletConnection();
@@ -44,16 +46,19 @@ export function DashboardPage() {
     if (status !== "connected") {
         return (
             <Layout>
-                <div className="flex flex-col items-center justify-center gap-4 py-24">
-                    <p className="text-base text-muted">
+                <div className="flex flex-col items-center justify-center gap-6 py-32">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-2">
+                        <AlertCircle className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-lg text-muted">
                         Connect your wallet to access your dashboard.
                     </p>
 
                     <a
                         href="/"
-                        className="rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5"
+                        className="group flex items-center gap-2 rounded-xl bg-foreground px-6 py-3 text-sm font-bold text-background transition-transform hover:scale-105"
                     >
-                        Go to home
+                        Go to home <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </a>
                 </div>
             </Layout>
@@ -62,109 +67,164 @@ export function DashboardPage() {
 
     return (
         <Layout>
-            <div className="flex flex-col gap-8">
-                <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                className="flex flex-col gap-10"
+            >
+                {/* Header Section */}
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
+                >
+                    <div className="space-y-2">
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
                             Dashboard
                         </h1>
-                        <p className="text-sm text-muted">Manage your reputation badges</p>
+                        <p className="text-base text-muted">Manage your soulbound reputation.</p>
                     </div>
 
                     {profile && (
                         <a
                             href="/badge/create"
-                            className="rounded-xl bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90"
+                            className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-foreground px-5 py-2.5 text-sm font-bold text-background transition-transform hover:scale-105 active:scale-95"
                         >
-                            + New badge
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                            <Plus className="relative z-10 h-4 w-4" />
+                            <span className="relative z-10">New Badge</span>
                         </a>
                     )}
-                </div>
-
-                <section className="rounded-2xl border border-border-low bg-card p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-foreground">
-                            Your profile
-                        </p>
-
-                        {profile && walletAddress && (
-                            <a
-                                href={"/" + walletAddress}
-                                className="text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
-                            >
-                                View public profile
-                            </a>
-                        )}
-                    </div>
-
-                    {isLoading ? (
-                        <div className="h-12 animate-pulse rounded-xl bg-cream/50" />
-                    ) : profile ? (
-                        <ProfileEditor
-                            profile={profile}
-                            walletAddress={walletAddress as string}
-                            onUpdate={refetch}
-                        />
-                    ) : (
-                        <div className="space-y-3">
-                            <p className="text-sm text-muted">
-                                Create a profile to start collecting badges.
-                            </p>
-                            <div className="flex gap-3">
-                                <input
-                                    type="text"
-                                    placeholder="Choose a username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    maxLength={32}
-                                    className="flex-1 rounded-lg border border-border-low bg-card px-4 py-2 text-sm outline-none transition placeholder:text-muted focus:border-foreground/30"
-                                />
-                                <button
-                                    onClick={handleInitializeProfile}
-                                    disabled={isSending || !username.trim()}
-                                    className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-                                >
-                                    {isSending ? "Creating..." : "Create"}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </section>
+                </motion.div>
 
                 {error && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 flex items-center gap-2"
+                    >
+                        <AlertCircle className="h-4 w-4" />
                         {error}
-                    </div>
+                    </motion.div>
                 )}
 
-                {txStatus && (
-                    <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm text-foreground">
-                        {txStatus}
+                <AnimatePresence>
+                    {txStatus && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm font-medium text-primary-light flex items-center gap-2"
+                        >
+                            <div className="h-2 w-2 rounded-full bg-primary-light shadow-[0_0_8px_rgba(184,122,255,0.8)] animate-pulse" />
+                            {txStatus}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="grid gap-10 lg:grid-cols-[1fr_350px]">
+                    <div className="flex flex-col gap-10">
+                        {/* Profile Section */}
+                        <motion.section 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="glass-panel p-6 sm:p-8 rounded-3xl space-y-6"
+                        >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full bg-primary" />
+                                    Your Profile
+                                </h2>
+
+                                {profile && walletAddress && (
+                                    <a
+                                        href={"/" + walletAddress}
+                                        className="text-xs font-semibold text-primary-light hover:text-white transition flex items-center gap-1"
+                                    >
+                                        View public profile <ArrowRight className="h-3 w-3" />
+                                    </a>
+                                )}
+                            </div>
+
+                            {isLoading ? (
+                                <div className="h-24 animate-[shimmer_2s_infinite] rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                            ) : profile ? (
+                                <ProfileEditor
+                                    profile={profile}
+                                    walletAddress={walletAddress as string}
+                                    onUpdate={refetch}
+                                />
+                            ) : (
+                                <div className="space-y-4">
+                                    <p className="text-sm text-muted">
+                                        You don't have a profile yet. Create a unique username to start collecting soulbound badges.
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="relative flex-1">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-bold">@</span>
+                                            <input
+                                                type="text"
+                                                placeholder="username"
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value)}
+                                                maxLength={32}
+                                                className="w-full rounded-xl border border-primary/20 bg-primary/5 pl-9 pr-4 py-3 text-sm outline-none transition focus:border-primary/60 focus:bg-primary/10"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleInitializeProfile}
+                                            disabled={isSending || !username.trim()}
+                                            className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white shadow-[0_0_15px_rgba(153,69,255,0.4)] transition hover:bg-primary-light disabled:opacity-50"
+                                        >
+                                            <span className="relative z-10">
+                                                {isSending ? "Creating..." : "Create"}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.section>
+
+                        {/* Badges Section */}
+                        <motion.section 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6"
+                        >
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                    Your Badges
+                                </h2>
+                                <p className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-muted">
+                                    {badges.length} Total
+                                </p>
+                            </div>
+
+                            <BadgeList
+                                badges={badges}
+                                onShare={handleShare}
+                                isLoading={isLoading}
+                            />
+                        </motion.section>
                     </div>
-                )}
 
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-foreground">Your badges</p>
-                        <p className="text-xs text-muted">{badges.length} total</p>
-                    </div>
-
-                    <BadgeList
-                        badges={badges}
-                        onShare={handleShare}
-                        isLoading={isLoading}
-                    />
-                </section>
-
-                {profile && (
-                    <ReputationCard
-                        profile={profile}
-                        badges={badges}
-                        walletAddress={walletAddress as string}
-                    />
-                )}
-
-            </div>
+                    {/* Sidebar / Reputation Card */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex flex-col gap-6"
+                    >
+                        {profile && (
+                            <ReputationCard
+                                profile={profile}
+                                badges={badges}
+                                walletAddress={walletAddress as string}
+                            />
+                        )}
+                    </motion.div>
+                </div>
+            </motion.div>
         </Layout>
     );
 }

@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useRepulink } from "../../hooks/useRepulink";
 import { type FreelancerProfile } from "../../types/repulink";
+import { motion, AnimatePresence } from "framer-motion";
+import { Camera, Edit2, Check, X, Trash2 } from "lucide-react";
 
 const AVATAR_STORAGE_KEY = "repulink_avatar_";
 
@@ -22,7 +24,6 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
   );
 
   const [displayUsername, setDisplayUsername] = useState(profile.username);
-
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,44 +50,44 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
 
   // ── Update username ──────────────────────────────────────────────────────
   const handleUpdateUsername = async () => {
-  if (!newUsername.trim() || newUsername === displayUsername) return;
-  try {
-    setTxStatus("Updating username...");
-    await updateProfile(newUsername.trim());
-    setDisplayUsername(newUsername.trim());
-    setTxStatus("Username updated!");
-    setIsEditingUsername(false);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    onUpdate();
-  } catch (err: any) {
-    setTxStatus(`Error: ${err.message}`);
-  }
-};
+    if (!newUsername.trim() || newUsername === displayUsername) return;
+    try {
+      setTxStatus("Updating username...");
+      await updateProfile(newUsername.trim());
+      setDisplayUsername(newUsername.trim());
+      setTxStatus("Username updated!");
+      setIsEditingUsername(false);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      onUpdate();
+    } catch (err: any) {
+      setTxStatus(`Error: ${err.message}`);
+    }
+  };
+
   // ── Close profile ────────────────────────────────────────────────────────
   const handleCloseProfile = async () => {
-  try {
-    setTxStatus("Closing profile...");
-    await closeProfile();
-    localStorage.removeItem(AVATAR_STORAGE_KEY + walletAddress);
-    setTxStatus("Profile closed.");
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    onUpdate();
-  } catch (err: any) {
-    setTxStatus(`Error: ${err.message}`);
-  }
-};
+    try {
+      setTxStatus("Closing profile...");
+      await closeProfile();
+      localStorage.removeItem(AVATAR_STORAGE_KEY + walletAddress);
+      setTxStatus("Profile closed.");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      onUpdate();
+    } catch (err: any) {
+      setTxStatus(`Error: ${err.message}`);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-
+    <div className="space-y-6">
       {/* Avatar + username row */}
-      <div className="flex items-center gap-4">
-
+      <div className="flex items-center gap-5 sm:gap-6">
         {/* Avatar */}
-        <div className="relative group">
-          <div
+        <div className="relative group perspective-1000">
+          <motion.div
+            whileHover={{ scale: 1.05, rotateY: 10 }}
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-cream text-xl font-semibold text-foreground transition group-hover:opacity-80"
+            className="flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 text-3xl font-bold text-primary-light shadow-[inset_0_2px_10px_rgba(153,69,255,0.2)] transition-all group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.4)]"
           >
             {avatarUrl ? (
               <img
@@ -97,9 +98,14 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
             ) : (
               displayUsername.slice(0, 2).toUpperCase()
             )}
-          </div>
-          <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background text-xs">
-            +
+            
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+              <Camera className="h-6 w-6 text-white" />
+            </div>
+          </motion.div>
+          <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-card border border-border-low text-primary-light shadow-lg">
+            <Camera className="h-4 w-4" />
           </div>
           <input
             ref={fileInputRef}
@@ -111,89 +117,131 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
         </div>
 
         {/* Username */}
-        <div className="flex-1 space-y-1">
-          {isEditingUsername ? (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                maxLength={32}
-                autoFocus
-                className="flex-1 rounded-lg border border-border-low bg-card px-3 py-1.5 text-sm outline-none focus:border-foreground/30"
-              />
-              <button
-                onClick={handleUpdateUsername}
-                disabled={isSending || !newUsername.trim()}
-                className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-50"
+        <div className="flex-1 space-y-2">
+          <AnimatePresence mode="wait">
+            {isEditingUsername ? (
+              <motion.div 
+                key="edit"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex flex-col sm:flex-row gap-2"
               >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditingUsername(false);
-                  setNewUsername(profile.username);
-                }}
-                className="rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium"
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  maxLength={32}
+                  autoFocus
+                  className="flex-1 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm outline-none focus:border-primary/60 focus:bg-primary/10 transition-colors"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpdateUsername}
+                    disabled={isSending || !newUsername.trim()}
+                    className="flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white shadow-[0_0_15px_rgba(153,69,255,0.4)] transition hover:bg-primary-light disabled:opacity-50"
+                  >
+                    <Check className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Save</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingUsername(false);
+                      setNewUsername(profile.username);
+                    }}
+                    className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2 px-3 text-sm font-medium hover:bg-white/10 transition"
+                  >
+                    <X className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Cancel</span>
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="view"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex items-center gap-3"
               >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-base font-medium text-foreground">
-                @{displayUsername}
-              </p>
-              <button
-                onClick={() => setIsEditingUsername(true)}
-                className="text-xs text-muted underline underline-offset-2 hover:text-foreground transition"
-              >
-                Edit
-              </button>
-            </div>
-          )}
-          <p className="text-xs text-muted">
-            {profile.badgeCount} badge{profile.badgeCount !== 1 ? "s" : ""}
-          </p>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground neon-text">
+                  @{displayUsername}
+                </h2>
+                <button
+                  onClick={() => setIsEditingUsername(true)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-muted hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition"
+                  title="Edit Username"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary-light">
+              {profile.badgeCount} Badge{profile.badgeCount !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Status */}
-      {txStatus && (
-        <p className="text-xs text-muted">{txStatus}</p>
-      )}
+      <AnimatePresence>
+        {txStatus && (
+          <motion.p 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-sm font-medium text-primary-light bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 inline-block"
+          >
+            {txStatus}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Delete account */}
-      <div className="border-t border-border-low pt-4">
-        {showDeleteConfirm ? (
-          <div className="space-y-2">
-            <p className="text-xs text-red-600 font-medium">
-              This will permanently close your profile on-chain and return your rent SOL. Are you sure?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleCloseProfile}
-                disabled={isSending}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {isSending ? "Closing..." : "Yes, delete my profile"}
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="text-xs text-red-500 underline underline-offset-2 hover:text-red-700 transition"
-          >
-            Delete account
-          </button>
-        )}
+      <div className="border-t border-white/5 pt-5">
+        <AnimatePresence mode="wait">
+          {showDeleteConfirm ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3"
+            >
+              <p className="text-sm text-red-400 font-medium flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                This will permanently close your profile on-chain and return your rent SOL. Are you absolute sure?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCloseProfile}
+                  disabled={isSending}
+                  className="rounded-lg bg-red-500/20 border border-red-500/50 px-4 py-2 text-sm font-bold text-red-300 hover:bg-red-500/30 transition disabled:opacity-50"
+                >
+                  {isSending ? "Closing..." : "Yes, delete profile"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-xs font-semibold text-muted hover:text-red-400 flex items-center gap-1.5 transition"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Account
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

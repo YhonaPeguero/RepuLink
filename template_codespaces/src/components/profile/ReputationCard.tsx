@@ -1,5 +1,7 @@
 import { useReputationNFT } from "../../hooks/useReputationNFT";
 import { type FreelancerProfile, type BadgeWithPda } from "../../types/repulink";
+import { motion } from "framer-motion";
+import { Hexagon, Sparkles, CheckCircle2 } from "lucide-react";
 
 interface ReputationCardProps {
   profile: FreelancerProfile;
@@ -30,62 +32,87 @@ export function ReputationCard({
   };
 
   return (
-    <div className="rounded-2xl border border-border-low bg-card p-6 space-y-5">
+    <div className="glass-panel p-6 sm:p-8 space-y-6 relative overflow-hidden group">
+      {/* Background glow effect */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10 group-hover:bg-primary/20 transition-colors duration-500" />
+      
       {/* Header */}
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">Reputation Card</p>
-        <p className="text-xs text-muted">
+        <div className="flex items-center gap-2">
+            <Hexagon className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold text-foreground">Reputation Card</h2>
+        </div>
+        <p className="text-sm text-muted">
           Mint your verified reputation as a soulbound NFT on Solana.
         </p>
       </div>
 
       {/* Card preview */}
-      <div className="relative overflow-hidden rounded-xl border border-border-low bg-gradient-to-br from-[#042C53] to-[#185FA5] p-5 text-white space-y-4">
+      <motion.div 
+        whileHover={{ scale: 1.02, rotateY: 5, rotateX: 5 }}
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a001a] via-[#1a0033] to-[#2a004d] p-6 text-white shadow-[0_10px_40px_rgba(153,69,255,0.15)] flex flex-col gap-6"
+        style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+      >
+        {/* Holographic grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20" />
+        
         {/* Top row */}
-        <div className="flex items-start justify-between">
+        <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest opacity-60">
-              RepuLink
+            <p className="text-xs font-bold uppercase tracking-widest text-primary-light">
+              RepuLink SBT
             </p>
-            <p className="mt-0.5 text-lg font-semibold">@{profile.username}</p>
+            <p className="mt-1 text-xl sm:text-2xl font-bold tracking-tight">@{profile.username}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs opacity-60">Score</p>
-            <p className="text-3xl font-bold">{score}%</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-primary-light">Trust Score</p>
+            <p className="text-3xl sm:text-4xl font-black drop-shadow-[0_0_15px_rgba(153,69,255,0.8)] neon-text text-white">
+                {score}%
+            </p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="relative z-10 grid grid-cols-3 gap-3">
           {[
             { label: "Endorsed", value: approved.length },
             { label: "Total", value: badges.length },
-            { label: "On-chain", value: "✓" },
+            { label: "On-chain", value: <CheckCircle2 className="h-4 w-4 text-green-400 inline" /> },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-lg bg-white/10 px-3 py-2 space-y-0.5"
+              className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 space-y-1 backdrop-blur-md"
             >
-              <p className="text-xs opacity-60">{stat.label}</p>
-              <p className="text-base font-semibold">{stat.value}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">{stat.label}</p>
+              <p className="text-lg font-bold text-white/90">{stat.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Wallet */}
-        <p className="font-mono text-xs opacity-40">
-          {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
-        </p>
+        {/* Wallet & Logo */}
+        <div className="relative z-10 flex items-end justify-between border-t border-white/10 pt-4 mt-2">
+            <p className="font-mono text-xs text-white/40 tracking-wider">
+            {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
+            </p>
+            <div className="flex items-center gap-1.5 opacity-50">
+                <Hexagon className="h-4 w-4" />
+                <span className="text-xs font-bold tracking-widest">SOL</span>
+            </div>
+        </div>
 
-        {/* Decorative circle */}
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
-        <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/5" />
-      </div>
+        {/* Decorative circles */}
+        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-primary/20 blur-[40px]" />
+        <div className="absolute -left-8 -bottom-8 h-40 w-40 rounded-full bg-blue-500/10 blur-[40px]" />
+      </motion.div>
 
       {/* Status */}
       {mintStatus && (
-        <div className="rounded-lg border border-border-low bg-cream/50 px-4 py-3 text-sm space-y-2">
-          <p className="text-foreground">{mintStatus}</p>
+        <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm space-y-2 backdrop-blur-md"
+        >
+          <p className="text-primary-light font-medium">{mintStatus}</p>
           {mintSignature && (
             <a
               href={
@@ -95,29 +122,36 @@ export function ReputationCard({
               }
               target="_blank"
               rel="noreferrer"
-              className="inline-block text-xs text-muted underline underline-offset-2 transition hover:text-foreground"
+              className="inline-block text-xs text-primary underline underline-offset-2 transition hover:text-primary-light font-medium"
             >
               View on Solana Explorer →
             </a>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Mint button */}
       <button
         onClick={handleMint}
         disabled={isMinting || badges.length === 0}
-        className="w-full rounded-xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+        className="group relative w-full flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-foreground px-4 py-3.5 text-sm font-bold text-background transition-all hover:scale-[1.02] active:scale-95 disabled:pointer-events-none disabled:opacity-50"
       >
-        {isMinting
-          ? mintStatus ?? "Minting..."
-          : badges.length === 0
-            ? "Get endorsements first"
-            : "Mint Reputation Card"}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <span className="relative z-10 flex items-center gap-2">
+            {isMinting ? (
+                mintStatus ?? "Minting..."
+            ) : badges.length === 0 ? (
+                "Get endorsements first"
+            ) : (
+                <>
+                    <Sparkles className="h-4 w-4" /> Mint Reputation Card
+                </>
+            )}
+        </span>
       </button>
 
       {badges.length === 0 && (
-        <p className="text-center text-xs text-muted">
+        <p className="text-center text-xs font-medium text-muted">
           You need at least 1 badge to mint your Reputation Card.
         </p>
       )}
