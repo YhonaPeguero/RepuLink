@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <defs>
+    <!-- Solana Purple Gradient -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b87aff" />
+      <stop offset="100%" stop-color="#9945FF" />
+    </linearGradient>
+    <!-- Deep Neon Blue Gradient -->
+    <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#93C5FD" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <g transform="translate(15, 60)" filter="url(#glow)">
+    <!-- First Link -->
+    <rect x="10" y="10" width="110" height="100" rx="50" stroke="url(#grad1)" stroke-width="22" stroke-linejoin="round" />
+    <!-- Second Interlocking Link -->
+    <rect x="90" y="10" width="110" height="100" rx="50" stroke="url(#grad2)" stroke-width="22" stroke-linejoin="round" />
+    
+    <!-- Cutout to create the illusion of interlocking (Overriding intersection) -->
+    <path d="M100 21 L100 99" stroke="#08080a" stroke-width="32" stroke-linecap="square" />
+    <path d="M100 21 L100 99" stroke="url(#grad1)" stroke-width="22" stroke-linecap="square" />
+  </g>
+</svg>

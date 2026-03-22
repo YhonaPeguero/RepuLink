@@ -32,30 +32,29 @@ export function HomePage() {
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center pb-20">
-        <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col items-center gap-12 w-full max-w-4xl relative z-10"
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col items-center gap-12 w-full max-w-4xl relative z-10"
         >
-            {/* Background glow behind text */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/20 blur-[120px] rounded-full -z-10 animate-pulse pointer-events-none" />
+          {/* Background glow behind text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/20 blur-[120px] rounded-full -z-10 animate-pulse pointer-events-none" />
 
           <motion.div variants={itemVariants} className="space-y-6 max-w-3xl flex flex-col items-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary-light backdrop-blur-md shadow-[0_0_15px_rgba(153,69,255,0.2)]">
-               <Sparkles className="h-3.5 w-3.5" /> Built on Solana
+              <Sparkles className="h-3.5 w-3.5" /> Built on Solana
             </span>
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-white !leading-[1.1]">
-              Your reputation,
+              You've earned it.
               <br />
               <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-primary-light via-primary to-blue-400 drop-shadow-[0_0_20px_rgba(153,69,255,0.5)]">
-                portable forever.
+                Now own it.
               </span>
             </h1>
             <p className="text-lg sm:text-xl leading-relaxed text-muted max-w-2xl px-4">
-              RepuLink lets freelancers collect verified badges from real clients.
-              Soulbound on-chain, shareable anywhere, owned by <strong className="text-white font-semibold">you</strong> — not the
-              platform.
+              Client endorsements, verified on-chain. Owned by{" "}
+              <strong className="text-white font-semibold">you</strong> — not the platform.
             </p>
           </motion.div>
 
@@ -63,7 +62,7 @@ export function HomePage() {
             {status !== "connected" ? (
               <div className="space-y-4 rounded-3xl glass-panel p-6 shadow-2xl relative overflow-hidden group">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                
+
                 <p className="text-sm font-semibold text-white/80 uppercase tracking-widest">
                   Connect your wallet
                 </p>
@@ -77,8 +76,8 @@ export function HomePage() {
                     >
                       <span className="flex items-center gap-3">
                         <div className="h-6 w-6 rounded-md bg-white/10 flex items-center justify-center p-1">
-                            {/* Generic wallet icon fallback if no connector icon */}
-                            <img src={connector.icon} alt={connector.name} className="h-full w-full object-contain" />
+                          {/* Generic wallet icon fallback if no connector icon */}
+                          <img src={connector.icon} alt={connector.name} className="h-full w-full object-contain" />
                         </div>
                         {connector.name}
                       </span>
@@ -105,20 +104,20 @@ export function HomePage() {
                 </div>
               </div>
             ) : (
-                <div className="space-y-2">
-                    <p className="text-sm font-bold text-green-400 mb-4 bg-green-500/10 inline-block px-4 py-1.5 rounded-full border border-green-500/20">
-                    Wallet connected successfully
-                    </p>
-                    <a
-                        href="/dashboard"
-                        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-foreground px-8 py-4 text-base font-bold text-background transition-transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <span className="relative z-10 flex items-center gap-2">
-                        Go to Dashboard <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                        </span>
-                    </a>
-                </div>
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-green-400 mb-4 bg-green-500/10 inline-block px-4 py-1.5 rounded-full border border-green-500/20">
+                  Wallet connected successfully
+                </p>
+                <a
+                  href="/dashboard"
+                  className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-foreground px-8 py-4 text-base font-bold text-background transition-transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Go to Dashboard <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </a>
+              </div>
             )}
           </motion.div>
 
@@ -145,7 +144,7 @@ export function HomePage() {
                 className="group rounded-3xl glass-panel p-6 space-y-2 transition-all duration-300 hover:-translate-y-2 hover:border-primary/40 hover:bg-white/[0.08]"
               >
                 <div className="transition-transform duration-300 group-hover:scale-110 origin-left">
-                    {feature.icon}
+                  {feature.icon}
                 </div>
                 <h3 className="text-base font-bold text-white tracking-wide">
                   {feature.title}
