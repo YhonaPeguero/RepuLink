@@ -1,7 +1,9 @@
 # RepuLink
 
+![Demo Preview](./template_codespaces/src/assets/portada.png)
+
 > **Your reputation, portable forever.**  
-> On-chain endorsement badges for freelancers — verified by real clients, owned by you, shareable anywhere.
+> RepuLink is a portable, on-chain reputation system built on Solana. Initially designed for freelancers, the protocol is flexible enough for any trust-based relationship: employers verifying employees, clients endorsing service providers, DAOs credentialing contributors, or communities recognizing members.
 
 Built on **Solana** · Submitted to **WayLearn x Solana Foundation Hackathon 2026**
 

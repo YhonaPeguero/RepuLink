@@ -1,7 +1,5 @@
 # vite-anchor
 
-![Demo Preview](./src/assets/portada.png)
-
 React + Vite starter with Tailwind CSS, `@solana/react-hooks`, and an Anchor vault program example.
 
 ## Getting Started
