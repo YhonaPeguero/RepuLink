@@ -163,21 +163,19 @@ else
 fi
 
 # ========================================
-# 7. CREAR PROYECTO
+# 7. DEPENDENCIAS DEL PROYECTO
 # ========================================
 
-echo "--- Creando proyecto dApp ---"
+echo "--- Instalando dependencias del proyecto ---"
 
-npx -y create-solana-dapp@latest \
-    -t solana-foundation/templates/kit/react-vite-anchor \
-    "template_codespaces"
+cd "$(dirname "$0")"
+npm install
 
 echo "========================================"
 echo "✅ Entorno listo para usar!!! :D"
 echo "========================================"
 echo ""
 echo "Próximos pasos:"
-echo "  cd template_codespaces"
 echo "  npm run dev"
 echo ""
 echo "Recarga tu terminal o ejecuta: source ~/.bashrc"

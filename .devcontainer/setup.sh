@@ -9,6 +9,7 @@ apt-get update && \
       build-essential \
       pkg-config \
       libssl-dev \
+      libudev-dev \
       sudo \
       tini
 
@@ -42,8 +43,7 @@ echo "================ Wallet Address: ======================"
 echo "========================================"
 solana-keygen new --no-bip39-passphrase --outfile ~/.config/solana/id.json
 
-npx -y create-solana-dapp@latest \
-    -t solana-foundation/templates/kit/react-vite-anchor \
-    "template_codespaces"
-    
+echo "--- Instalando dependencias del proyecto ---"
+npm install
+
 echo "Entorno listo para usar!!! :D"

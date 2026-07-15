@@ -1,6 +1,6 @@
 # RepuLink
 
-![Demo Preview](./template_codespaces/src/assets/portada.png)
+![Demo Preview](./src/assets/portada.png)
 
 > **Your reputation, portable forever.**  
 > RepuLink is a portable, on-chain reputation system built on Solana. Initially designed for freelancers, the protocol is flexible enough for any trust-based relationship: employers verifying employees, clients endorsing service providers, DAOs credentialing contributors, or communities recognizing members.
@@ -126,8 +126,8 @@ Freelancer                    Client
 ### 1. Clone and setup
 
 ```bash
-git clone https://github.com/YhonaPeguero/Solana-Hackathon-WayLearn.git
-cd Solana-Hackathon-WayLearn/template_codespaces
+git clone https://github.com/YhonaPeguero/RepuLink..git repulink
+cd repulink
 npm install
 ```
 
@@ -180,8 +180,7 @@ After the setup finishes, run:
 
 ```bash
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-cd template_codespaces
-npm install && npm run dev
+npm run dev
 ```
 
 ---
@@ -199,7 +198,7 @@ EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw
 ## Project Structure
 
 ```
-template_codespaces/
+repulink/
 ├── anchor/
 │   ├── programs/repulink/src/lib.rs   ← Anchor program
 │   ├── tests/repulink.ts              ← Integration tests
