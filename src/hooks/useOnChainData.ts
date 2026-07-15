@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { type Address } from "@solana/kit";
+import { getBase58Decoder, type Address } from "@solana/kit";
 import { type FreelancerProfile, type Badge, type BadgeWithPda } from "../types/repulink";
 
 const RPC_URL = import.meta.env.VITE_HELIUS_RPC_URL as string;
@@ -157,7 +157,7 @@ export function useOnChainData(walletAddress: Address | undefined) {
 
       const accounts = await connection.getProgramAccounts(programId, {
         filters: [
-          { memcmp: { offset: 0, bytes: badgeDiscriminator.toString("base64") } },
+          { memcmp: { offset: 0, bytes: getBase58Decoder().decode(badgeDiscriminator) } },
           { memcmp: { offset: 8, bytes: owner.toBase58() } },
         ],
       });

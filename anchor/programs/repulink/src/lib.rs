@@ -53,6 +53,10 @@ pub mod repulink {
             !client_name.is_empty() && client_name.len() <= MAX_CLIENT_NAME_LEN,
             RepulinkError::InvalidClientName
         );
+        require!(
+            !client_email.is_empty() && client_email.len() <= MAX_CLIENT_EMAIL_LEN,
+            RepulinkError::InvalidClientEmail
+        );
 
         let profile = &mut ctx.accounts.profile;
         let badge_index = profile.badge_count;
@@ -150,7 +154,13 @@ pub mod repulink {
     }
 
     /// Closes the FreelancerProfile PDA and returns rent to the owner.
-    pub fn close_profile(_ctx: Context<CloseProfile>) -> Result<()> {
+    /// Closing with badges would reset badge_count and make new badges
+    /// collide with the old badge PDAs, bricking badge creation.
+    pub fn close_profile(ctx: Context<CloseProfile>) -> Result<()> {
+        require!(
+            ctx.accounts.profile.badge_count == 0,
+            RepulinkError::ProfileHasBadges
+        );
         Ok(())
     }
 }
@@ -345,4 +355,10 @@ pub enum RepulinkError {
 
     #[msg("Badge count overflow: maximum number of badges reached")]
     BadgeCountOverflow,
+
+    #[msg("Client email must be between 1 and 128 characters")]
+    InvalidClientEmail,
+
+    #[msg("Profile still has badges and cannot be closed")]
+    ProfileHasBadges,
 }
