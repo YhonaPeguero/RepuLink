@@ -1,7 +1,6 @@
-import { useReputationNFT } from "../../hooks/useReputationNFT";
 import { type FreelancerProfile, type BadgeWithPda } from "../../types/repulink";
 import { motion } from "framer-motion";
-import { Hexagon, Sparkles, CheckCircle2 } from "lucide-react";
+import { Hexagon, CheckCircle2 } from "lucide-react";
 
 interface ReputationCardProps {
   profile: FreelancerProfile;
@@ -14,22 +13,11 @@ export function ReputationCard({
   badges,
   walletAddress,
 }: ReputationCardProps) {
-  const { mintReputationCard, isMinting, mintStatus, mintSignature } =
-    useReputationNFT();
-
   const approved = badges.filter((b) => "approved" in b.account.status);
   const score =
     badges.length > 0
       ? Math.round((approved.length / badges.length) * 100)
       : 0;
-
-  const handleMint = async () => {
-    try {
-      await mintReputationCard(profile, badges);
-    } catch {
-      // error already set in hook
-    }
-  };
 
   return (
     <div className="glass-panel p-6 sm:p-8 space-y-6 relative overflow-hidden group">
@@ -43,7 +31,7 @@ export function ReputationCard({
             <h2 className="text-lg font-bold text-foreground">Reputation Card</h2>
         </div>
         <p className="text-sm text-muted">
-          Mint your verified reputation as a soulbound NFT on Solana.
+          Your verified on-chain reputation on Solana.
         </p>
       </div>
 
@@ -105,54 +93,9 @@ export function ReputationCard({
         <div className="absolute -left-8 -bottom-8 h-40 w-40 rounded-full bg-blue-500/10 blur-[40px]" />
       </motion.div>
 
-      {/* Status */}
-      {mintStatus && (
-        <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm space-y-2 backdrop-blur-md"
-        >
-          <p className="text-primary-light font-medium">{mintStatus}</p>
-          {mintSignature && (
-            <a
-              href={
-                "https://explorer.solana.com/tx/" +
-                mintSignature +
-                "?cluster=devnet"
-              }
-              target="_blank"
-              rel="noreferrer"
-              className="inline-block text-xs text-primary underline underline-offset-2 transition hover:text-primary-light font-medium"
-            >
-              View on Solana Explorer →
-            </a>
-          )}
-        </motion.div>
-      )}
-
-      {/* Mint button */}
-      <button
-        onClick={handleMint}
-        disabled={isMinting || badges.length === 0}
-        className="group relative w-full flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-foreground px-4 py-3.5 text-sm font-bold text-background transition-all hover:scale-[1.02] active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <span className="relative z-10 flex items-center gap-2">
-            {isMinting ? (
-                mintStatus ?? "Minting..."
-            ) : badges.length === 0 ? (
-                "Get endorsements first"
-            ) : (
-                <>
-                    <Sparkles className="h-4 w-4" /> Mint Reputation Card
-                </>
-            )}
-        </span>
-      </button>
-
       {badges.length === 0 && (
         <p className="text-center text-xs font-medium text-muted">
-          You need at least 1 badge to mint your Reputation Card.
+          You need at least 1 badge to build your Reputation Card.
         </p>
       )}
     </div>
