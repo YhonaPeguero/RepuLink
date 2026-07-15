@@ -1,5 +1,5 @@
 {
-  "name": "template_codespaces",
+  "name": "repulink",
   "scripts": {
     "anchor-build": "cd anchor && anchor build",
     "anchor-test": "cd anchor && anchor test --skip-deploy",

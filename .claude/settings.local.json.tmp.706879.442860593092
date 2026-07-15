@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(npm ls *)",
+      "mcp__solana-mcp-server__Solana_Expert__Ask_For_Help",
+      "Bash(node -e \"const k=require\\('@solana/kit'\\); console.log\\(typeof k.createNoopSigner\\)\")",
+      "Bash(node --input-type=module -e \"import\\('@solana/kit'\\).then\\(k=>console.log\\(typeof k.createNoopSigner\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'refactor: move template_codespaces/ to repo root \\(Task 0.1\\) *)"
+    ]
+  }
+}

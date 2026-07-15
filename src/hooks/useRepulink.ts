@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useWalletConnection, useSendTransaction } from "@solana/react-hooks";
 import {
+    createNoopSigner,
     getProgramDerivedAddress,
     getAddressEncoder,
     getBytesEncoder,
@@ -57,30 +58,34 @@ export function useRepulink() {
 
     const walletAddress = wallet?.account.address as Address | undefined;
 
+    // El firmado real lo hace send() con la wallet conectada; el noop signer
+    // solo satisface el TransactionSigner que exigen los builders de Codama.
+    const walletSigner = walletAddress ? createNoopSigner(walletAddress) : undefined;
+
     // ── Initialize profile ───────────────────────────────────────────────────
     const initializeProfile = useCallback(
         async (username: string) => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const instruction = await getInitializeProfileInstructionAsync({
-                owner: wallet.account,
+                owner: walletSigner,
                 username,
             });
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     // ── Create badge ─────────────────────────────────────────────────────────
     const createBadge = useCallback(
         async (data: CreateBadgeFormData, badgeIndex: number) => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const badgePda = await deriveBadgePda(walletAddress, badgeIndex);
 
             const instruction = await getCreateBadgeInstructionAsync({
-                owner: wallet.account,
+                owner: walletSigner,
                 badge: badgePda,
                 title: data.title,
                 description: data.description,
@@ -90,7 +95,7 @@ export function useRepulink() {
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     // ── Approve badge ────────────────────────────────────────────────────────
@@ -100,12 +105,12 @@ export function useRepulink() {
             badgeIndex: number,
             data: ApproveBadgeFormData
         ) => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const badgePda = await deriveBadgePda(freelancerAddress, badgeIndex);
 
             const instruction = await getApproveBadgeInstructionAsync({
-                reviewer: wallet.account,
+                reviewer: walletSigner,
                 freelancer: freelancerAddress,
                 badge: badgePda,
                 badgeIndex,
@@ -116,18 +121,18 @@ export function useRepulink() {
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     // ── Reject badge ─────────────────────────────────────────────────────────
     const rejectBadge = useCallback(
         async (freelancerAddress: Address, badgeIndex: number) => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const badgePda = await deriveBadgePda(freelancerAddress, badgeIndex);
 
             const instruction = await getRejectBadgeInstructionAsync({
-                reviewer: wallet.account,
+                reviewer: walletSigner,
                 freelancer: freelancerAddress,
                 badge: badgePda,
                 badgeIndex,
@@ -135,36 +140,36 @@ export function useRepulink() {
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     // ── Update profile ───────────────────────────────────────────────────────
     const updateProfile = useCallback(
         async (username: string) => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const instruction = await getUpdateProfileInstructionAsync({
-                owner: wallet.account,
+                owner: walletSigner,
                 username,
             });
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     // ── Close profile ────────────────────────────────────────────────────────
     const closeProfile = useCallback(
         async () => {
-            if (!walletAddress || !wallet) throw new Error("Wallet not connected");
+            if (!walletAddress || !walletSigner) throw new Error("Wallet not connected");
 
             const instruction = await getCloseProfileInstructionAsync({
-                owner: wallet.account,
+                owner: walletSigner,
             });
 
             return send({ instructions: [instruction] });
         },
-        [walletAddress, wallet, send]
+        [walletAddress, walletSigner, send]
     );
 
     return {

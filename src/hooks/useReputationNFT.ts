@@ -4,7 +4,6 @@ import { type BadgeWithPda, type FreelancerProfile } from "../types/repulink";
 import { PublicKey } from "@solana/web3.js";
 import { type Address } from "@solana/kit";
 
-const RPC_URL = import.meta.env.VITE_HELIUS_RPC_URL as string;
 const MPL_CORE_PROGRAM_ID = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d" as Address;
 const SYSTEM_PROGRAM = "11111111111111111111111111111111" as Address;
 
