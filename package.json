@@ -29,7 +29,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@coral-xyz/anchor": "^0.32.1",
     "@fontsource/bricolage-grotesque": "^5.2.10",
     "@fontsource/ibm-plex-sans": "^5.2.8",
     "@solana/client": "^1.7.0",
