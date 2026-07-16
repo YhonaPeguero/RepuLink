@@ -33,6 +33,7 @@ const STATE_META: Record<JobState, { label: string; className: string }> = {
 };
 
 const STAGE_LABEL: Record<string, string> = {
+  preparing: "Preparing transaction...",
   sending: "Sending transaction...",
   confirming: "Confirming...",
   finalizing: "Finalizing (funds are moving)...",

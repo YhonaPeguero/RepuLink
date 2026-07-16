@@ -28,6 +28,25 @@ const HUMAN_MESSAGES: Partial<Record<number, string>> = {
     "The fee changed since you loaded the page. Refresh and try again.",
 };
 
+/** Los errores custom de Anchor empiezan en 6000 (0x1770); códigos menores
+ * pertenecen a otros programas de la tx (ATA, token) y no deben mapearse
+ * como errores de RepuLink. */
+const ANCHOR_CUSTOM_ERROR_BASE = 0x1770;
+
+/** Extrae el código Custom de un TransactionError estructurado
+ * (forma `{ InstructionError: [idx, { Custom: n }] }` de getSignatureStatuses). */
+function customCodeFromTransactionError(txErr: unknown): number | null {
+  if (typeof txErr !== "object" || txErr === null) return null;
+  const ie = (txErr as { InstructionError?: unknown }).InstructionError;
+  if (!Array.isArray(ie) || ie.length < 2) return null;
+  const detail = ie[1];
+  if (typeof detail === "object" && detail !== null) {
+    const custom = (detail as { Custom?: unknown }).Custom;
+    if (typeof custom === "number") return custom;
+  }
+  return null;
+}
+
 /** Busca un código de error custom del programa en la cadena de causas. */
 function findCustomErrorCode(err: unknown): number | null {
   const seen = new Set<unknown>();
@@ -35,8 +54,12 @@ function findCustomErrorCode(err: unknown): number | null {
   while (current && !seen.has(current)) {
     seen.add(current);
     if (typeof current === "object") {
+      const txErr = (current as { transactionError?: unknown }).transactionError;
+      const structured = customCodeFromTransactionError(txErr);
+      if (structured !== null) return structured;
+
       const ctx = (current as { context?: { code?: unknown } }).context;
-      if (ctx && typeof ctx.code === "number" && ctx.code >= 0x1770) {
+      if (ctx && typeof ctx.code === "number" && ctx.code >= ANCHOR_CUSTOM_ERROR_BASE) {
         return ctx.code;
       }
       const msg = (current as { message?: unknown }).message;
@@ -56,6 +79,9 @@ function findCustomErrorCode(err: unknown): number | null {
 export function mapEscrowError(err: unknown): string {
   const code = findCustomErrorCode(err);
   if (code !== null) {
+    if (code < ANCHOR_CUSTOM_ERROR_BASE) {
+      return `A supporting instruction failed (error ${code}). Check balances and try again.`;
+    }
     const human = HUMAN_MESSAGES[code];
     if (human) return human;
     try {

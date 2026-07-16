@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   useSendTransaction,
   useSolanaClient,
@@ -31,14 +31,60 @@ import {
   getResolveDisputeInstructionAsync,
   REPULINK_PROGRAM_ADDRESS,
 } from "../generated/repulink";
-import { fetchJob, type Job } from "../generated/repulink/accounts/job";
+import {
+  fetchJob,
+  fetchMaybeJob,
+  type Job,
+} from "../generated/repulink/accounts/job";
 import { fetchConfig } from "../generated/repulink/accounts/config";
 import { USDC_MINT } from "../config";
-import { awaitSignatureCommitment } from "../lib/confirm";
+import {
+  awaitSignatureCommitment,
+  TransactionFailedError,
+} from "../lib/confirm";
 import { mapEscrowError } from "../lib/escrow-errors";
 import { sha256Utf8 } from "../lib/usdc";
 
-export type EscrowStage = "idle" | "sending" | "confirming" | "finalizing";
+/** Error de acción con el error original preservado para inspección. */
+export class EscrowActionError extends Error {
+  constructor(message: string, public readonly original: unknown) {
+    super(message);
+    this.name = "EscrowActionError";
+  }
+}
+
+export type EscrowStage =
+  | "idle"
+  | "preparing"
+  | "sending"
+  | "confirming"
+  | "finalizing";
+
+/** Intento de creación pendiente: mantiene el jobId estable entre reintentos
+ * para que un resultado ambiguo (timeout post-envío) nunca produzca un
+ * segundo escrow — el retry apunta al mismo Job PDA. */
+type PendingCreate = { jobId: string; jobAddress: string; signature?: string };
+
+function pendingCreateKey(wallet: Address): string {
+  return `repulink:pending-create:${wallet}`;
+}
+
+function loadPendingCreate(wallet: Address): PendingCreate | null {
+  try {
+    const raw = sessionStorage.getItem(pendingCreateKey(wallet));
+    return raw ? (JSON.parse(raw) as PendingCreate) : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePendingCreate(wallet: Address, pending: PendingCreate): void {
+  sessionStorage.setItem(pendingCreateKey(wallet), JSON.stringify(pending));
+}
+
+function clearPendingCreate(wallet: Address): void {
+  sessionStorage.removeItem(pendingCreateKey(wallet));
+}
 
 // ── PDAs ───────────────────────────────────────────────────────────────────
 
@@ -96,9 +142,29 @@ export function useEscrow() {
   const { send } = useSendTransaction();
   const client = useSolanaClient();
   const [stage, setStage] = useState<EscrowStage>("idle");
+  const lockRef = useRef(false);
 
   const walletAddress = wallet?.account.address as Address | undefined;
   const rpc = client.runtime.rpc;
+
+  /** Mutex síncrono: se adquiere antes del primer await de cualquier acción,
+   * así dos clicks/submits solapados no pueden enviar dos transacciones. */
+  const runExclusive = useCallback(
+    async <T,>(fn: () => Promise<T>): Promise<T> => {
+      if (lockRef.current) {
+        throw new Error("Another action is already in progress");
+      }
+      lockRef.current = true;
+      setStage("preparing");
+      try {
+        return await fn();
+      } finally {
+        lockRef.current = false;
+        setStage("idle");
+      }
+    },
+    [],
+  );
 
   const requireSigner = useCallback((): {
     signer: TransactionSigner;
@@ -114,17 +180,17 @@ export function useEscrow() {
     async (
       instructions: Instruction[],
       commitment: "confirmed" | "finalized",
+      onSent?: (signature: Signature) => void,
     ): Promise<Signature> => {
       setStage("sending");
       try {
         const signature = await send({ instructions });
+        onSent?.(signature);
         setStage(commitment === "finalized" ? "finalizing" : "confirming");
         await awaitSignatureCommitment(rpc, signature, commitment);
         return signature;
       } catch (err) {
-        throw new Error(mapEscrowError(err));
-      } finally {
-        setStage("idle");
+        throw new EscrowActionError(mapEscrowError(err), err);
       }
     },
     [send, rpc],
@@ -141,50 +207,92 @@ export function useEscrow() {
 
   // ── Crear + fondear (una sola transacción, atómico) ──────────────────────
   const createAndFundJob = useCallback(
-    async (form: {
+    (form: {
       freelancer: string;
       amount: bigint;
       brief: string;
       reviewWindowSecs: number;
-    }): Promise<{ jobAddress: Address; signature: Signature }> => {
-      const { signer, addr } = requireSigner();
-      const freelancer = address(form.freelancer.trim());
-      const mint = address(USDC_MINT);
+    }): Promise<{ jobAddress: Address; signature?: Signature }> =>
+      runExclusive(async () => {
+        const { signer, addr } = requireSigner();
+        const freelancer = address(form.freelancer.trim());
+        const mint = address(USDC_MINT);
 
-      // Config fresco: feeBps del snapshot debe ser el vigente.
-      const config = await fetchConfig(rpc, await deriveConfigPda());
+        // Reconciliación: si un intento anterior quedó en resultado ambiguo
+        // (timeout post-envío), resolverlo antes de crear nada nuevo.
+        const pending = loadPendingCreate(addr);
+        if (pending) {
+          const existing = await fetchMaybeJob(rpc, address(pending.jobAddress));
+          if (existing.exists) {
+            clearPendingCreate(addr);
+            return {
+              jobAddress: address(pending.jobAddress),
+              signature: pending.signature as Signature | undefined,
+            };
+          }
+          // El job no existe aún: se reutiliza el mismo jobId (mismo PDA).
+          // Si la tx anterior aterrizara después, esta fallará on-chain en
+          // vez de fondear un segundo escrow.
+        }
+        const jobId = pending ? BigInt(pending.jobId) : randomJobId();
+        const jobAddress = await deriveJobPda(addr, jobId);
 
-      const jobId = randomJobId();
-      const jobAddress = await deriveJobPda(addr, jobId);
-      const termsHash = await sha256Utf8(form.brief);
-      const clientToken = await ata(mint, addr);
+        // Config fresco: feeBps del snapshot debe ser el vigente.
+        const config = await fetchConfig(rpc, await deriveConfigPda());
+        const termsHash = await sha256Utf8(form.brief);
+        const clientToken = await ata(mint, addr);
 
-      const createIx = await getCreateJobInstructionAsync({
-        client: signer,
-        mint,
-        jobId,
-        freelancer,
-        amount: form.amount,
-        feeBpsSnapshot: config.data.feeBps,
-        termsHash,
-        reviewWindowSecs: form.reviewWindowSecs,
-      });
-      const fundIx = await getFundJobInstructionAsync({
-        client: signer,
-        job: jobAddress,
-        mint,
-        clientToken,
-      });
+        const createIx = await getCreateJobInstructionAsync({
+          client: signer,
+          mint,
+          jobId,
+          freelancer,
+          amount: form.amount,
+          feeBpsSnapshot: config.data.feeBps,
+          termsHash,
+          reviewWindowSecs: form.reviewWindowSecs,
+        });
+        const fundIx = await getFundJobInstructionAsync({
+          client: signer,
+          job: jobAddress,
+          mint,
+          clientToken,
+        });
 
-      const signature = await sendAndAwait([createIx, fundIx], "finalized");
-      return { jobAddress, signature };
-    },
-    [requireSigner, rpc, sendAndAwait],
+        savePendingCreate(addr, { jobId: jobId.toString(), jobAddress });
+        try {
+          const signature = await sendAndAwait(
+            [createIx, fundIx],
+            "finalized",
+            (sig) =>
+              savePendingCreate(addr, {
+                jobId: jobId.toString(),
+                jobAddress,
+                signature: sig,
+              }),
+          );
+          clearPendingCreate(addr);
+          return { jobAddress, signature };
+        } catch (err) {
+          // Fallo definitivo on-chain → no hay job; permitir intento limpio.
+          // Resultado desconocido (timeout) → conservar el intento para
+          // reconciliar en el siguiente submit.
+          if (
+            err instanceof EscrowActionError &&
+            err.original instanceof TransactionFailedError
+          ) {
+            clearPendingCreate(addr);
+          }
+          throw err;
+        }
+      }),
+    [requireSigner, rpc, sendAndAwait, runExclusive],
   );
 
   // ── Freelancer entrega ────────────────────────────────────────────────────
   const markDelivered = useCallback(
-    async (jobAddress: Address, deliveryRef: string): Promise<Signature> => {
+    (jobAddress: Address, deliveryRef: string): Promise<Signature> =>
+      runExclusive(async () => {
       const { signer } = requireSigner();
       if (!deliveryRef.trim()) {
         throw new Error("Provide the delivery reference (URL or description)");
@@ -196,16 +304,17 @@ export function useEscrow() {
         deliveryHash,
       });
       return sendAndAwait([ix], "confirmed");
-    },
-    [requireSigner, sendAndAwait],
+      }),
+    [requireSigner, sendAndAwait, runExclusive],
   );
 
   // ── Payout compartido: release / claim timeout ────────────────────────────
   const releaseWith = useCallback(
-    async (
+    (
       jobAddress: Address,
       build: typeof getApproveReleaseInstructionAsync,
-    ): Promise<Signature> => {
+    ): Promise<Signature> =>
+      runExclusive(async () => {
       const { signer } = requireSigner();
       const job = await freshJob(jobAddress);
       const config = await fetchConfig(rpc, await deriveConfigPda());
@@ -234,8 +343,8 @@ export function useEscrow() {
         treasuryToken,
       });
       return sendAndAwait([...ensureAtas, ix], "finalized");
-    },
-    [requireSigner, freshJob, rpc, sendAndAwait],
+      }),
+    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive],
   );
 
   const approveRelease = useCallback(
@@ -252,7 +361,8 @@ export function useEscrow() {
 
   // ── Client cancela / reembolso ────────────────────────────────────────────
   const cancelRefund = useCallback(
-    async (jobAddress: Address): Promise<Signature> => {
+    (jobAddress: Address): Promise<Signature> =>
+      runExclusive(async () => {
       const { signer } = requireSigner();
       const job = await freshJob(jobAddress);
       const clientToken = await ata(job.mint, job.client);
@@ -269,25 +379,27 @@ export function useEscrow() {
         clientToken,
       });
       return sendAndAwait([ensureAta, ix], "finalized");
-    },
-    [requireSigner, freshJob, sendAndAwait],
+      }),
+    [requireSigner, freshJob, sendAndAwait, runExclusive],
   );
 
   // ── Disputas ──────────────────────────────────────────────────────────────
   const openDispute = useCallback(
-    async (jobAddress: Address): Promise<Signature> => {
-      const { signer } = requireSigner();
-      const ix = getOpenDisputeInstruction({ signer, job: jobAddress });
-      return sendAndAwait([ix], "confirmed");
-    },
-    [requireSigner, sendAndAwait],
+    (jobAddress: Address): Promise<Signature> =>
+      runExclusive(async () => {
+        const { signer } = requireSigner();
+        const ix = getOpenDisputeInstruction({ signer, job: jobAddress });
+        return sendAndAwait([ix], "confirmed");
+      }),
+    [requireSigner, sendAndAwait, runExclusive],
   );
 
   const resolveDispute = useCallback(
-    async (
+    (
       jobAddress: Address,
       freelancerAmount: bigint,
-    ): Promise<Signature> => {
+    ): Promise<Signature> =>
+      runExclusive(async () => {
       const { signer } = requireSigner();
       const job = await freshJob(jobAddress);
       const config = await fetchConfig(rpc, await deriveConfigPda());
@@ -317,8 +429,8 @@ export function useEscrow() {
         freelancerAmount,
       });
       return sendAndAwait([...ensureAtas, ix], "finalized");
-    },
-    [requireSigner, freshJob, rpc, sendAndAwait],
+      }),
+    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive],
   );
 
   return {

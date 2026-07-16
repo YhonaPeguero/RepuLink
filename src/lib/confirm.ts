@@ -11,12 +11,33 @@ type MinimalRpc = {
   };
 };
 
+/** La transacción aterrizó y falló: resultado definitivo. */
+export class TransactionFailedError extends Error {
+  constructor(public readonly transactionError: unknown) {
+    super(`Transaction failed on-chain: ${JSON.stringify(transactionError)}`);
+    this.name = "TransactionFailedError";
+  }
+}
+
+/** No se pudo determinar el resultado (timeout/expiración): NO es un fallo
+ * confirmado — la transacción puede haber aterrizado. */
+export class ConfirmationTimeoutError extends Error {
+  constructor(commitment: string, signature: string) {
+    super(
+      `Timed out waiting for "${commitment}" on transaction ${signature}. ` +
+        `Its outcome is unknown; check the explorer before retrying.`,
+    );
+    this.name = "ConfirmationTimeoutError";
+  }
+}
+
 const LEVEL: Record<string, number> = { processed: 0, confirmed: 1, finalized: 2 };
 
 /**
  * Espera a que una firma alcance el commitment pedido. Éxito solo si el
- * estado llega al nivel Y err es null; lanza en error on-chain o timeout
- * (una tx no encontrada tras el timeout se trata como caída/expirada).
+ * estado llega al nivel Y err es null. Lanza TransactionFailedError (fallo
+ * definitivo, con el TransactionError estructurado) o
+ * ConfirmationTimeoutError (resultado desconocido).
  */
 export async function awaitSignatureCommitment(
   rpc: MinimalRpc,
@@ -32,9 +53,7 @@ export async function awaitSignatureCommitment(
     const status = value[0];
     if (status) {
       if (status.err != null) {
-        throw new Error(
-          `Transaction failed on-chain: ${JSON.stringify(status.err)}`,
-        );
+        throw new TransactionFailedError(status.err);
       }
       if (
         status.confirmationStatus &&
@@ -45,8 +64,5 @@ export async function awaitSignatureCommitment(
     }
     await new Promise((r) => setTimeout(r, 1500));
   }
-  throw new Error(
-    `Timed out waiting for "${commitment}" on transaction ${signature}. ` +
-      `It may have expired; check the explorer before retrying.`,
-  );
+  throw new ConfirmationTimeoutError(commitment, signature);
 }
