@@ -13,3 +13,15 @@ if (!rpcUrl) {
 }
 
 export const RPC_URL: string = rpcUrl;
+
+const usdcMint = import.meta.env.VITE_USDC_MINT as string | undefined;
+
+if (!usdcMint) {
+  throw new Error(
+    "Falta VITE_USDC_MINT en el entorno. Usa el mint de USDC devnet de " +
+      ".env.example (el mint nunca va hardcodeado; ver spec).",
+  );
+}
+
+export const USDC_MINT: string = usdcMint;
+export const USDC_DECIMALS = 6;

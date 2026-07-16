@@ -5,6 +5,8 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { CreateBadgePage } from "./pages/CreateBadgePage";
 import { ApproveBadgePage } from "./pages/ApproveBadgePage";
 import { PublicProfilePage } from "./pages/PublicProfilePage";
+import { CreateJobPage } from "./pages/CreateJobPage";
+import { JobPage } from "./pages/JobPage";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -16,6 +18,8 @@ function AnimatedRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/badge/create" element={<CreateBadgePage />} />
         <Route path="/approve/:freelancer/:badgeIndex" element={<ApproveBadgePage />} />
+        <Route path="/job/create" element={<CreateJobPage />} />
+        <Route path="/job/:jobAddress" element={<JobPage />} />
         <Route path="/:username" element={<PublicProfilePage />} />
       </Routes>
     </AnimatePresence>
