@@ -8,7 +8,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-repulink = "EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw"
+repulink = "2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1"
 
 [registry]
 url = "https://api.apr.dev"

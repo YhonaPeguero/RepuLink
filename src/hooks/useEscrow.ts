@@ -7,9 +7,6 @@ import {
 import {
   address,
   createNoopSigner,
-  getAddressEncoder,
-  getProgramDerivedAddress,
-  getU64Encoder,
   type Address,
   type Instruction,
   type Signature,
@@ -29,7 +26,6 @@ import {
   getMarkDeliveredInstruction,
   getOpenDisputeInstruction,
   getResolveDisputeInstructionAsync,
-  REPULINK_PROGRAM_ADDRESS,
 } from "../generated/repulink";
 import {
   fetchJob,
@@ -88,28 +84,8 @@ function clearPendingCreate(wallet: Address): void {
 
 // ── PDAs ───────────────────────────────────────────────────────────────────
 
-export async function deriveJobPda(
-  client: Address,
-  jobId: bigint,
-): Promise<Address> {
-  const [pda] = await getProgramDerivedAddress({
-    programAddress: REPULINK_PROGRAM_ADDRESS,
-    seeds: [
-      "job",
-      getAddressEncoder().encode(client),
-      getU64Encoder().encode(jobId),
-    ],
-  });
-  return pda;
-}
-
-export async function deriveConfigPda(): Promise<Address> {
-  const [pda] = await getProgramDerivedAddress({
-    programAddress: REPULINK_PROGRAM_ADDRESS,
-    seeds: ["config"],
-  });
-  return pda;
-}
+import { deriveConfigPda, deriveJobPda } from "../lib/pdas";
+export { deriveConfigPda, deriveJobPda };
 
 async function ata(mint: Address, owner: Address): Promise<Address> {
   const [pda] = await findAssociatedTokenPda({

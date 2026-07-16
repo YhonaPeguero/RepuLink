@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 pub mod escrow;
 pub use escrow::*;
 
-declare_id!("EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw");
+declare_id!("2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1");
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MAX_USERNAME_LEN: usize = 32;

@@ -54,7 +54,7 @@ import {
 } from "../instructions";
 
 export const REPULINK_PROGRAM_ADDRESS =
-  "EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw" as Address<"EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw">;
+  "2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1" as Address<"2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1">;
 
 export enum RepulinkAccount {
   Badge,
@@ -333,7 +333,7 @@ export function identifyRepulinkInstruction(
 }
 
 export type ParsedRepulinkInstruction<
-  TProgram extends string = "EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw",
+  TProgram extends string = "2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1",
 > =
   | ({
       instructionType: RepulinkInstruction.ApproveBadge;

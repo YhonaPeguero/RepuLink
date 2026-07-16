@@ -53,7 +53,7 @@ No wallet required for clients. No crypto knowledge needed. The blockchain is in
 ┌──────────────────────▼──────────────────────────────┐
 │                 Solana Devnet                        │
 │                                                     │
-│  Program: EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw  │
+│  Program: 2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1  │
 │                                                     │
 │  PDAs:                                              │
 │  ├── FreelancerProfile  [seeds: "profile" + owner]  │
@@ -140,10 +140,11 @@ cp .env.example .env
 ```
 
 ```env
-VITE_HELIUS_API_KEY=your_helius_api_key
 VITE_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=your_helius_api_key
-VITE_PROGRAM_ID=EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw
+VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
 ```
+
+El program id vive en el cliente generado (`src/generated/repulink`); no hay que configurarlo.
 
 Get your Helius API key at [dashboard.helius.dev](https://dashboard.helius.dev).
 
@@ -188,10 +189,10 @@ npm run dev
 ## Program ID
 
 ```
-EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw
+2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1
 ```
 
-[View on Solana Explorer →](https://explorer.solana.com/address/EQEWMBEtLZE7L2WS3iWo88rk8tQ4o8P9djmEJkG8gTFw?cluster=devnet)
+[View on Solana Explorer →](https://explorer.solana.com/address/2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1?cluster=devnet)
 
 ---
 
