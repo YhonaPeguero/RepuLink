@@ -12,10 +12,19 @@
   --border-strong: rgba(255, 255, 255, 0.12);
   --border-low: rgba(255, 255, 255, 0.06);
   
-  /* Solana Purple / Neon Accents - Controlled Intensity */
+  /* Paleta oficial RepuLink:
+     primario #9945FF · secundario #3B82F6 · acento #FBBF24 */
   --accent: #9945FF;
   --accent-glow: rgba(153, 69, 255, 0.25);
   --accent-light: #b87aff;
+
+  --secondary: #3B82F6;
+  --secondary-glow: rgba(59, 130, 246, 0.25);
+
+  --accent-gold: #FBBF24;
+
+  /* Gradiente de marca */
+  --brand-gradient: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
   
   --muted: #a1a1aa; /* zinc-400 */
   --cream: rgba(255, 255, 255, 0.05); /* Used for subtle fills */
@@ -42,6 +51,10 @@
   --color-primary: var(--accent);
   --color-primary-glow: var(--accent-glow);
   --color-primary-light: var(--accent-light);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-glow: var(--secondary-glow);
+  --color-accent-gold: var(--accent-gold);
   
   --color-muted: var(--muted);
   --color-card: var(--card);
@@ -92,6 +105,17 @@
 
 /* Custom premium utilities */
 @layer utilities {
+  /* Gradiente de marca: fondo y texto */
+  .bg-brand-gradient {
+    background-image: var(--brand-gradient);
+  }
+  .text-brand-gradient {
+    background-image: var(--brand-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
   .glass-panel {
     @apply bg-card backdrop-blur-xl border border-border-low shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)];
   }
