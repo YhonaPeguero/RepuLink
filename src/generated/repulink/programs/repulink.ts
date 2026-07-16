@@ -18,16 +18,38 @@ import {
 } from "@solana/kit";
 import {
   parseApproveBadgeInstruction,
+  parseApproveReleaseInstruction,
+  parseCancelRefundInstruction,
+  parseClaimTimeoutInstruction,
+  parseCloseJobInstruction,
   parseCloseProfileInstruction,
   parseCreateBadgeInstruction,
+  parseCreateJobInstruction,
+  parseFundJobInstruction,
+  parseInitConfigInstruction,
   parseInitializeProfileInstruction,
+  parseMarkDeliveredInstruction,
+  parseOpenDisputeInstruction,
   parseRejectBadgeInstruction,
+  parseResolveDisputeInstruction,
+  parseUpdateConfigInstruction,
   parseUpdateProfileInstruction,
   type ParsedApproveBadgeInstruction,
+  type ParsedApproveReleaseInstruction,
+  type ParsedCancelRefundInstruction,
+  type ParsedClaimTimeoutInstruction,
+  type ParsedCloseJobInstruction,
   type ParsedCloseProfileInstruction,
   type ParsedCreateBadgeInstruction,
+  type ParsedCreateJobInstruction,
+  type ParsedFundJobInstruction,
+  type ParsedInitConfigInstruction,
   type ParsedInitializeProfileInstruction,
+  type ParsedMarkDeliveredInstruction,
+  type ParsedOpenDisputeInstruction,
   type ParsedRejectBadgeInstruction,
+  type ParsedResolveDisputeInstruction,
+  type ParsedUpdateConfigInstruction,
   type ParsedUpdateProfileInstruction,
 } from "../instructions";
 
@@ -36,7 +58,9 @@ export const REPULINK_PROGRAM_ADDRESS =
 
 export enum RepulinkAccount {
   Badge,
+  Config,
   FreelancerProfile,
+  Job,
 }
 
 export function identifyRepulinkAccount(
@@ -58,12 +82,34 @@ export function identifyRepulinkAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([155, 12, 170, 224, 30, 250, 204, 130]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkAccount.Config;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([142, 199, 151, 44, 211, 185, 36, 26]),
       ),
       0,
     )
   ) {
     return RepulinkAccount.FreelancerProfile;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([75, 124, 80, 203, 161, 180, 202, 80]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkAccount.Job;
   }
   throw new Error(
     "The provided account could not be identified as a repulink account.",
@@ -72,10 +118,21 @@ export function identifyRepulinkAccount(
 
 export enum RepulinkInstruction {
   ApproveBadge,
+  ApproveRelease,
+  CancelRefund,
+  ClaimTimeout,
+  CloseJob,
   CloseProfile,
   CreateBadge,
+  CreateJob,
+  FundJob,
+  InitConfig,
   InitializeProfile,
+  MarkDelivered,
+  OpenDispute,
   RejectBadge,
+  ResolveDispute,
+  UpdateConfig,
   UpdateProfile,
 }
 
@@ -93,6 +150,50 @@ export function identifyRepulinkInstruction(
     )
   ) {
     return RepulinkInstruction.ApproveBadge;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([110, 173, 58, 175, 146, 128, 138, 255]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.ApproveRelease;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([192, 62, 158, 203, 193, 97, 26, 15]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.CancelRefund;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([130, 234, 45, 53, 120, 90, 86, 178]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.ClaimTimeout;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([90, 100, 180, 200, 200, 163, 120, 182]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.CloseJob;
   }
   if (
     containsBytes(
@@ -120,6 +221,39 @@ export function identifyRepulinkInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([178, 130, 217, 110, 100, 27, 82, 119]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.CreateJob;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([244, 198, 4, 15, 41, 178, 169, 187]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.FundJob;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([23, 235, 115, 232, 168, 96, 1, 231]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.InitConfig;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([32, 145, 77, 213, 58, 39, 251, 234]),
       ),
       0,
@@ -131,12 +265,56 @@ export function identifyRepulinkInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([240, 118, 188, 142, 64, 85, 107, 18]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.MarkDelivered;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([137, 25, 99, 119, 23, 223, 161, 42]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.OpenDispute;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([204, 66, 56, 248, 153, 119, 148, 234]),
       ),
       0,
     )
   ) {
     return RepulinkInstruction.RejectBadge;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([231, 6, 202, 6, 96, 103, 12, 230]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.ResolveDispute;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([29, 158, 252, 191, 10, 83, 219, 99]),
+      ),
+      0,
+    )
+  ) {
+    return RepulinkInstruction.UpdateConfig;
   }
   if (
     containsBytes(
@@ -161,17 +339,50 @@ export type ParsedRepulinkInstruction<
       instructionType: RepulinkInstruction.ApproveBadge;
     } & ParsedApproveBadgeInstruction<TProgram>)
   | ({
+      instructionType: RepulinkInstruction.ApproveRelease;
+    } & ParsedApproveReleaseInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.CancelRefund;
+    } & ParsedCancelRefundInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.ClaimTimeout;
+    } & ParsedClaimTimeoutInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.CloseJob;
+    } & ParsedCloseJobInstruction<TProgram>)
+  | ({
       instructionType: RepulinkInstruction.CloseProfile;
     } & ParsedCloseProfileInstruction<TProgram>)
   | ({
       instructionType: RepulinkInstruction.CreateBadge;
     } & ParsedCreateBadgeInstruction<TProgram>)
   | ({
+      instructionType: RepulinkInstruction.CreateJob;
+    } & ParsedCreateJobInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.FundJob;
+    } & ParsedFundJobInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.InitConfig;
+    } & ParsedInitConfigInstruction<TProgram>)
+  | ({
       instructionType: RepulinkInstruction.InitializeProfile;
     } & ParsedInitializeProfileInstruction<TProgram>)
   | ({
+      instructionType: RepulinkInstruction.MarkDelivered;
+    } & ParsedMarkDeliveredInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.OpenDispute;
+    } & ParsedOpenDisputeInstruction<TProgram>)
+  | ({
       instructionType: RepulinkInstruction.RejectBadge;
     } & ParsedRejectBadgeInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.ResolveDispute;
+    } & ParsedResolveDisputeInstruction<TProgram>)
+  | ({
+      instructionType: RepulinkInstruction.UpdateConfig;
+    } & ParsedUpdateConfigInstruction<TProgram>)
   | ({
       instructionType: RepulinkInstruction.UpdateProfile;
     } & ParsedUpdateProfileInstruction<TProgram>);
@@ -188,6 +399,34 @@ export function parseRepulinkInstruction<TProgram extends string>(
         ...parseApproveBadgeInstruction(instruction),
       };
     }
+    case RepulinkInstruction.ApproveRelease: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.ApproveRelease,
+        ...parseApproveReleaseInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.CancelRefund: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.CancelRefund,
+        ...parseCancelRefundInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.ClaimTimeout: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.ClaimTimeout,
+        ...parseClaimTimeoutInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.CloseJob: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.CloseJob,
+        ...parseCloseJobInstruction(instruction),
+      };
+    }
     case RepulinkInstruction.CloseProfile: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -202,6 +441,27 @@ export function parseRepulinkInstruction<TProgram extends string>(
         ...parseCreateBadgeInstruction(instruction),
       };
     }
+    case RepulinkInstruction.CreateJob: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.CreateJob,
+        ...parseCreateJobInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.FundJob: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.FundJob,
+        ...parseFundJobInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.InitConfig: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.InitConfig,
+        ...parseInitConfigInstruction(instruction),
+      };
+    }
     case RepulinkInstruction.InitializeProfile: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -209,11 +469,39 @@ export function parseRepulinkInstruction<TProgram extends string>(
         ...parseInitializeProfileInstruction(instruction),
       };
     }
+    case RepulinkInstruction.MarkDelivered: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.MarkDelivered,
+        ...parseMarkDeliveredInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.OpenDispute: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.OpenDispute,
+        ...parseOpenDisputeInstruction(instruction),
+      };
+    }
     case RepulinkInstruction.RejectBadge: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: RepulinkInstruction.RejectBadge,
         ...parseRejectBadgeInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.ResolveDispute: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.ResolveDispute,
+        ...parseResolveDisputeInstruction(instruction),
+      };
+    }
+    case RepulinkInstruction.UpdateConfig: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: RepulinkInstruction.UpdateConfig,
+        ...parseUpdateConfigInstruction(instruction),
       };
     }
     case RepulinkInstruction.UpdateProfile: {

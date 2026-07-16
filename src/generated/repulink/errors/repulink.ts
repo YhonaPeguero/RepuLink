@@ -32,30 +32,70 @@ export const REPULINK_ERROR__INVALID_CLIENT_EMAIL_REVIEWER = 0x1776; // 6006
 export const REPULINK_ERROR__BADGE_NOT_PENDING = 0x1777; // 6007
 /** BadgeCountOverflow: Badge count overflow: maximum number of badges reached */
 export const REPULINK_ERROR__BADGE_COUNT_OVERFLOW = 0x1778; // 6008
+/** InvalidClientEmail: Client email must be between 1 and 128 characters */
+export const REPULINK_ERROR__INVALID_CLIENT_EMAIL = 0x1779; // 6009
+/** ProfileHasBadges: Profile still has badges and cannot be closed */
+export const REPULINK_ERROR__PROFILE_HAS_BADGES = 0x177a; // 6010
+/** InvalidState: Instruction not allowed in the current job state */
+export const REPULINK_ERROR__INVALID_STATE = 0x177b; // 6011
+/** Unauthorized: Signer is not authorized for this instruction */
+export const REPULINK_ERROR__UNAUTHORIZED = 0x177c; // 6012
+/** ReviewWindowNotElapsed: The review window has not elapsed yet */
+export const REPULINK_ERROR__REVIEW_WINDOW_NOT_ELAPSED = 0x177d; // 6013
+/** InvalidAmount: Amount is invalid */
+export const REPULINK_ERROR__INVALID_AMOUNT = 0x177e; // 6014
+/** InvalidReviewWindow: Review window must be between 1 and 30 days */
+export const REPULINK_ERROR__INVALID_REVIEW_WINDOW = 0x177f; // 6015
+/** SelfDealingNotAllowed: Client and freelancer must be different wallets */
+export const REPULINK_ERROR__SELF_DEALING_NOT_ALLOWED = 0x1780; // 6016
+/** MathOverflow: Math overflow */
+export const REPULINK_ERROR__MATH_OVERFLOW = 0x1781; // 6017
+/** FeeTooHigh: Fee exceeds the allowed maximum or does not match config */
+export const REPULINK_ERROR__FEE_TOO_HIGH = 0x1782; // 6018
 
 export type RepulinkError =
   | typeof REPULINK_ERROR__BADGE_COUNT_OVERFLOW
   | typeof REPULINK_ERROR__BADGE_NOT_PENDING
+  | typeof REPULINK_ERROR__FEE_TOO_HIGH
+  | typeof REPULINK_ERROR__INVALID_AMOUNT
+  | typeof REPULINK_ERROR__INVALID_CLIENT_EMAIL
   | typeof REPULINK_ERROR__INVALID_CLIENT_EMAIL_REVIEWER
   | typeof REPULINK_ERROR__INVALID_CLIENT_LINKEDIN
   | typeof REPULINK_ERROR__INVALID_CLIENT_NAME
   | typeof REPULINK_ERROR__INVALID_CLIENT_TWITTER
   | typeof REPULINK_ERROR__INVALID_DESCRIPTION
+  | typeof REPULINK_ERROR__INVALID_REVIEW_WINDOW
+  | typeof REPULINK_ERROR__INVALID_STATE
   | typeof REPULINK_ERROR__INVALID_TITLE
-  | typeof REPULINK_ERROR__INVALID_USERNAME;
+  | typeof REPULINK_ERROR__INVALID_USERNAME
+  | typeof REPULINK_ERROR__MATH_OVERFLOW
+  | typeof REPULINK_ERROR__PROFILE_HAS_BADGES
+  | typeof REPULINK_ERROR__REVIEW_WINDOW_NOT_ELAPSED
+  | typeof REPULINK_ERROR__SELF_DEALING_NOT_ALLOWED
+  | typeof REPULINK_ERROR__UNAUTHORIZED;
 
 let repulinkErrorMessages: Record<RepulinkError, string> | undefined;
 if (process.env.NODE_ENV !== "production") {
   repulinkErrorMessages = {
     [REPULINK_ERROR__BADGE_COUNT_OVERFLOW]: `Badge count overflow: maximum number of badges reached`,
     [REPULINK_ERROR__BADGE_NOT_PENDING]: `Badge is not in Pending status`,
+    [REPULINK_ERROR__FEE_TOO_HIGH]: `Fee exceeds the allowed maximum or does not match config`,
+    [REPULINK_ERROR__INVALID_AMOUNT]: `Amount is invalid`,
+    [REPULINK_ERROR__INVALID_CLIENT_EMAIL]: `Client email must be between 1 and 128 characters`,
     [REPULINK_ERROR__INVALID_CLIENT_EMAIL_REVIEWER]: `Reviewer email must be 128 characters or less`,
     [REPULINK_ERROR__INVALID_CLIENT_LINKEDIN]: `LinkedIn URL must be 128 characters or less`,
     [REPULINK_ERROR__INVALID_CLIENT_NAME]: `Client name must be between 1 and 64 characters`,
     [REPULINK_ERROR__INVALID_CLIENT_TWITTER]: `Twitter handle must be 64 characters or less`,
     [REPULINK_ERROR__INVALID_DESCRIPTION]: `Description must be between 1 and 256 characters`,
+    [REPULINK_ERROR__INVALID_REVIEW_WINDOW]: `Review window must be between 1 and 30 days`,
+    [REPULINK_ERROR__INVALID_STATE]: `Instruction not allowed in the current job state`,
     [REPULINK_ERROR__INVALID_TITLE]: `Title must be between 1 and 64 characters`,
     [REPULINK_ERROR__INVALID_USERNAME]: `Username must be between 1 and 32 characters`,
+    [REPULINK_ERROR__MATH_OVERFLOW]: `Math overflow`,
+    [REPULINK_ERROR__PROFILE_HAS_BADGES]: `Profile still has badges and cannot be closed`,
+    [REPULINK_ERROR__REVIEW_WINDOW_NOT_ELAPSED]: `The review window has not elapsed yet`,
+    [REPULINK_ERROR__SELF_DEALING_NOT_ALLOWED]: `Client and freelancer must be different wallets`,
+    [REPULINK_ERROR__UNAUTHORIZED]: `Signer is not authorized for this instruction`,
   };
 }
 

@@ -7,4 +7,6 @@
  */
 
 export * from "./badge";
+export * from "./config";
 export * from "./freelancerProfile";
+export * from "./job";

@@ -1,4 +1,7 @@
 [toolchain]
+# Pin a la versión del toolchain compilado desde fuente en esta máquina ARM64
+# (no hay binarios Anza para aarch64; ver ~/.local/bin/solana y cargo-build-sbf).
+solana_version = "2.3.13"
 
 [features]
 resolution = true

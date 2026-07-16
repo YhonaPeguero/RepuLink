@@ -7,8 +7,19 @@
  */
 
 export * from "./approveBadge";
+export * from "./approveRelease";
+export * from "./cancelRefund";
+export * from "./claimTimeout";
+export * from "./closeJob";
 export * from "./closeProfile";
 export * from "./createBadge";
+export * from "./createJob";
+export * from "./fundJob";
+export * from "./initConfig";
 export * from "./initializeProfile";
+export * from "./markDelivered";
+export * from "./openDispute";
 export * from "./rejectBadge";
+export * from "./resolveDispute";
+export * from "./updateConfig";
 export * from "./updateProfile";
