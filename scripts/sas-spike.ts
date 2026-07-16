@@ -11,23 +11,15 @@
  * Resultado del spike (2026-07-16): funciona → Fase 2 sigue por Task 2.2a
  * (scripts/attest-job.ts), no hace falta el fallback 2.2b.
  */
-import {
-  airdropFactory,
-  getAddressEncoder,
-  getProgramDerivedAddress,
-  getU64Encoder,
-  lamports,
-  type Address,
-  type KeyPairSigner,
-} from "@solana/kit";
+import { airdropFactory, lamports, type KeyPairSigner } from "@solana/kit";
 import { deserializeAttestationData, fetchAttestation, fetchSchema } from "sas-lib";
-import { REPULINK_PROGRAM_ADDRESS } from "../src/generated/repulink";
 import { JobState } from "../src/generated/repulink/types/jobState";
 import {
   MIN_BALANCE_LAMPORTS,
+  deriveJobPda,
   ensureCredentialAndSchema,
   emitJobAttestation,
-  loadOrCreateAuthority,
+  loadAuthority,
   rpc,
   rpcSubscriptions,
 } from "./sas";
@@ -54,21 +46,8 @@ async function ensureFunds(authority: KeyPairSigner): Promise<void> {
   }
 }
 
-/** PDA del Job igual que el programa: seeds = [b"job", client, job_id le u64]. */
-async function deriveJobPda(client: Address, jobId: bigint): Promise<Address> {
-  const [pda] = await getProgramDerivedAddress({
-    programAddress: REPULINK_PROGRAM_ADDRESS,
-    seeds: [
-      "job",
-      getAddressEncoder().encode(client),
-      getU64Encoder().encode(jobId),
-    ],
-  });
-  return pda;
-}
-
 async function main() {
-  const authority = await loadOrCreateAuthority();
+  const authority = await loadAuthority({ allowCreate: true });
   await ensureFunds(authority);
 
   const { credentialPda, schemaPda } = await ensureCredentialAndSchema(authority);
