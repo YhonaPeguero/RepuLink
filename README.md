@@ -301,16 +301,36 @@ repulink/
 
 ---
 
-## Legacy: the endorsement module
+## Legacy: the endorsement module — deprecated, out of review scope
 
 The program still exports `initialize_profile`, `create_badge`, `approve_badge`,
 `reject_badge`, `update_profile` and `close_profile` from an earlier iteration
 where clients endorsed freelancers directly, with routes still wired at
-`/badge/create` and `/approve/:freelancer/:badgeIndex`. It is tested and
-functional but independent of the escrow: it shares no accounts with `Job` or
-`Config`. The escrow flow above is what the project is about; the endorsement
-module is documented here so a reviewer reading `lib.rs` knows why those
-instructions exist.
+`/badge/create` and `/approve/:freelancer/:badgeIndex`. It is independent of the
+escrow: it shares no accounts with `Job` or `Config`.
+
+**It is deprecated, and it is not part of what we are asking reviewers to look
+at.** It is documented here only so that a reviewer reading `lib.rs` knows why
+those instructions exist.
+
+The reason it was replaced is a design flaw, not a bug: **nothing ties the
+approver to any real work.** In the `ReviewBadge` context the reviewer is an
+unconstrained `Signer`, and the freelancer is an `UncheckedAccount` used only to
+derive the badge PDA. So:
+
+- Any wallet can approve any pending badge, and `approve_badge` records whoever
+  signed as `client_wallet` — the "client identity" on the badge is simply
+  whoever sent the transaction.
+- Nothing stops a freelancer from approving their own badge.
+- Symmetrically, any wallet can `reject_badge` on someone else's pending badge.
+
+A signature proves only that _someone_ signed. It cannot prove a working
+relationship, so the endorsements it produces are not worth much as reputation.
+
+The escrow fixes this at the root: approval authority is derived from having put
+money in the vault. `approve_release` requires `signer.key() == job.client`, and
+the client is the wallet that funded the job. An endorsement is no longer a
+claim someone makes — it is a side effect of a payment that actually happened.
 
 ---
 
@@ -331,6 +351,12 @@ instructions exist.
 [Solana Attestation Service](https://attest.solana.com) ·
 [Helius](https://helius.dev) · [Codama](https://github.com/codama-idl/codama) ·
 [LiteSVM](https://github.com/LiteSVM/litesvm) · [WayLearn](https://waylearn.io)
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
 
 ---
 
