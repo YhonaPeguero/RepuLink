@@ -30,3 +30,8 @@ lerna-debug.log*
 /anchor/.anchor/
 /anchor/target/
 scripts/.keys/
+
+# keypairs
+*keypair*.json
+id*.json
+.repulink/
