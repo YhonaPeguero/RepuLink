@@ -2,138 +2,211 @@
 
 ![Demo Preview](./src/assets/portada.png)
 
-> **Your reputation, portable forever.**  
-> RepuLink is a portable, on-chain reputation system built on Solana. Initially designed for freelancers, the protocol is flexible enough for any trust-based relationship: employers verifying employees, clients endorsing service providers, DAOs credentialing contributors, or communities recognizing members.
+> **Escrow for freelance work on Solana, with a portable reputation trail.**
+> A client locks USDC in a program-owned vault, the freelancer delivers, and the
+> funds are released against an on-chain state machine. Every settled job can be
+> attested through the Solana Attestation Service, so the freelancer keeps a
+> verifiable track record that no platform owns.
 
 Built on **Solana** · Submitted to **WayLearn x Solana Foundation Hackathon 2026**
 
----
-
-## What is RepuLink?
-
-Freelancers in LATAM and globally build their reputation across Upwork, Fiverr, and direct clients — but that reputation is trapped in each platform. When they switch platforms or work directly, they start from zero.
-
-RepuLink fixes that. When a freelancer completes a project, they send the client a verification link. The client approves it on-chain with their identity (wallet, LinkedIn, Twitter, email). The result is a **soulbound badge** — permanently on Solana, owned by the freelancer, verifiable by anyone with a public profile link.
-
-No wallet required for clients. No crypto knowledge needed. The blockchain is invisible.
+**Program ID (devnet):** [`2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1`](https://explorer.solana.com/address/2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1?cluster=devnet)
 
 ---
 
-## Features
+## Why
 
-| Feature | Description |
-|---|---|
-| **Freelancer profile** | Create an on-chain identity with a username and avatar |
-| **Endorsement requests** | Send clients a link to verify your completed work |
-| **Client approval** | Clients approve or reject via a simple link — no wallet required |
-| **Soulbound badges** | Non-transferable NFTs that cannot be faked or sold |
-| **Client identity on-chain** | Approvals store wallet address, LinkedIn, Twitter, and email |
-| **Public profile** | Share a `repulink.app/your-address` link — verifiable by anyone |
-| **Profile editor** | Update username, upload avatar, delete account |
-| **Solana Explorer** | Every badge links directly to the on-chain transaction |
+Freelancers get paid on trust: either they work first and hope the client pays,
+or the client pays first and hopes the work arrives. Platforms solve this with
+custodial escrow, and charge for it — and the reputation you build stays locked
+inside the platform.
+
+RepuLink puts the escrow in a program and the reputation in an attestation.
+Neither party custodies the other's money, and the outcome of every job is a
+public, verifiable record tied to the freelancer's wallet.
 
 ---
 
-## Architecture
+## The escrow flow
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Frontend                          │
-│         Next.js · React · TailwindCSS               │
-│                                                     │
-│  HomePage  →  Dashboard  →  CreateBadge             │
-│                    ↓                                │
-│            ApproveBadge  ←  (client link)           │
-│                    ↓                                │
-│            PublicProfile  (shareable)               │
-└──────────────────────┬──────────────────────────────┘
-                       │  @solana/react-hooks
-                       │  @solana/kit
-                       │  Codama (generated types)
-┌──────────────────────▼──────────────────────────────┐
-│                 Solana Devnet                        │
-│                                                     │
-│  Program: 2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1  │
-│                                                     │
-│  PDAs:                                              │
-│  ├── FreelancerProfile  [seeds: "profile" + owner]  │
-│  └── Badge              [seeds: "badge" + owner + index] │
-│                                                     │
-│  Instructions:                                      │
-│  ├── initialize_profile(username)                   │
-│  ├── update_profile(username)                       │
-│  ├── close_profile()                                │
-│  ├── create_badge(title, description, client_*)     │
-│  ├── approve_badge(index, linkedin, twitter, email) │
-│  └── reject_badge(index)                            │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│                 Helius RPC                          │
-│   getAccountInfo · getProgramAccounts (badge fetch) │
-└─────────────────────────────────────────────────────┘
+  client                        program                      freelancer
+    │                              │                              │
+    │  create_job ────────────────►│  Created                     │
+    │  fund_job (USDC → vault) ───►│  Funded                      │
+    │                              │◄──────── mark_delivered ─────│
+    │                              │  Delivered                   │
+    │                              │  review window starts        │
+    │                              │                              │
+    │  approve_release ───────────►│  Released  (fee → treasury,  │
+    │                              │             rest → freelancer)│
+    │                              │                              │
+    │                              │◄──────── claim_timeout ──────│
+    │                              │  Released, once the review   │
+    │                              │  window has elapsed          │
+    │                              │                              │
+    │  cancel_refund ─────────────►│  Refunded (full amount back, │
+    │  (only before delivery)      │            no fee)           │
+    │                              │                              │
+    │  open_dispute ──────────────►│  Disputed ◄─── open_dispute ─│
+    │                              │      │                       │
+    │                              │      ▼                       │
+    │                              │  resolve_dispute (arbiter)   │
+    │                              │  Resolved — split payout     │
 ```
+
+### States
+
+`Created` → `Funded` → `Delivered` → `Released`, with `Refunded` (cancelled
+before delivery) and `Disputed` → `Resolved` as the alternative terminals.
+Every transition is guarded by an explicit state check and a signer check; the
+tests below cover the invalid transitions and the role-swap attempts.
+
+### Rules enforced on-chain
+
+| Rule                                                      | Where                                                                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Client and freelancer cannot be the same wallet           | `create_job` — `SelfDealingNotAllowed`                                                                  |
+| Amount must be non-zero                                   | `create_job` — `InvalidAmount`                                                                          |
+| Review window must be 1–30 days                           | `create_job` — `InvalidReviewWindow`                                                                    |
+| The fee the client signs for must match `Config`          | `create_job` — `fee_bps_snapshot` is compared against `config.fee_bps`, then frozen into the `Job`      |
+| Fee is capped at 5% (`MAX_FEE_BPS = 500`)                 | `init_config` / `update_config` — `FeeTooHigh`                                                          |
+| Only the client releases or cancels                       | `approve_release`, `cancel_refund`                                                                      |
+| Only the freelancer marks delivered or claims the timeout | `mark_delivered`, `claim_timeout`                                                                       |
+| Only the `Config` arbiter resolves a dispute              | `resolve_dispute`                                                                                       |
+| Only the upgrade authority can call `init_config`         | `init_config` checks `ProgramData.upgrade_authority_address` — prevents front-running the global config |
+| Vault substitution is rejected                            | the vault is the ATA of the `Job` PDA; constraints re-derive it                                         |
+
+**Fees.** `fee_bps` is copied from `Config` into the `Job` at creation, so a
+later `update_config` never changes the economics of a job already in flight.
+On release, the fee goes to the treasury's token account and the remainder to
+the freelancer. On a dispute, the fee applies only to the arbiter-assigned
+`freelancer_amount`; the client's share is returned untouched.
+
+**Two things to be precise about**, because the names invite the wrong reading:
+
+- **The review window is not an auto-release.** Nothing executes on its own —
+  Solana has no scheduler. When the window elapses, `claim_timeout` becomes
+  available and the _freelancer_ must send it. Before that it fails with
+  `ReviewWindowNotElapsed`. The default the UI proposes is 7 days; the program
+  accepts anything from 1 to 30 days per job.
+- **A timeout pays the freelancer; it does not refund the client.** The refund
+  path is `cancel_refund`, which the client can only use _before_ delivery
+  (`Created` or `Funded`) and which returns the full amount with no fee.
 
 ---
 
-## Endorsement Flow
+## Disputes and the arbiter
 
-```
-Freelancer                    Client
-    │                            │
-    │  1. Create endorsement     │
-    │     request (on-chain)     │
-    │                            │
-    │  2. Copy approval link ──► │  Opens link (no wallet needed)
-    │                            │  Privy creates embedded wallet
-    │                            │  Fills identity (LinkedIn, email...)
-    │                            │  Signs approval on-chain
-    │                            │
-    │  ◄── Badge appears ────────│
-    │      in dashboard          │
-    │      (soulbound NFT)       │
-```
+Either party can call `open_dispute` while funds are in escrow (`Funded` or
+`Delivered`). The job freezes until the arbiter calls `resolve_dispute` with a
+`freelancer_amount`, which splits the vault three ways: fee to the treasury,
+`freelancer_amount - fee` to the freelancer, and the remainder to the client.
 
----
+**The arbiter is a single `Pubkey` stored in `Config`.** The program has no
+multisig logic of its own — it checks one signature, from whichever key the
+admin set. That is the current honest state of the code, and it is the main
+centralisation caveat of this MVP.
 
-## Tech Stack
-
-**Backend (on-chain)**
-- Rust + Anchor framework
-- Token Extensions (soulbound / non-transferable logic)
-- PDA accounts for profile and badge state
-- Deployed on Solana Devnet
-
-**Frontend**
-- React + Vite + TypeScript
-- TailwindCSS
-- `@solana/react-hooks` + `@solana/kit`
-- Codama (auto-generated program client from IDL)
-- Helius RPC (on-chain data fetching)
-- Privy (embedded wallet for clients — no extension required)
+The intended path to decentralise it does not require a program change: any
+address that can sign a CPI works as the arbiter, so pointing `Config.arbiter`
+at a Squads v4 multisig vault would give 2-of-3 human arbitration without
+touching the state machine. That is deliberately **not** done yet — Squads v4 is
+scoped to mainnet in [`SPEC_escrow_mvp.md`](./SPEC_escrow_mvp.md), and on devnet
+the arbiter is a plain keypair. Treat "2-of-3 arbitration" as roadmap, not as a
+shipped property.
 
 ---
 
-## Getting Started
+## On-chain vs off-chain
+
+### On-chain
+
+|              |                                                                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Config` PDA | seeds `["config"]` → [`CiFqmrZiASJMFsfXv9RfVe2Eb6Eq2h62XXNwxKAc8xSv`](https://explorer.solana.com/address/CiFqmrZiASJMFsfXv9RfVe2Eb6Eq2h62XXNwxKAc8xSv?cluster=devnet). Holds `admin`, `arbiter`, `treasury`, `fee_bps`. |
+| `Job` PDA    | seeds `["job", client, job_id]` (`job_id` little-endian `u64`). Holds both parties, the arbiter and fee snapshots, amounts, timestamps, state, and the two hashes.                                                       |
+| Vault        | the associated token account owned by the `Job` PDA. Funds only ever move through SPL Token CPIs signed by the PDA.                                                                                                      |
+| Events       | `JobCreated`, `JobFunded`, `JobDelivered`, `JobReleased`, `JobRefunded`, `JobDisputed`, `JobResolved`.                                                                                                                   |
+| Attestations | Solana Attestation Service (see below).                                                                                                                                                                                  |
+
+Money never touches a wallet the protocol controls: the vault is a PDA-owned
+ATA, and every transfer is a CPI to the official SPL Token program. There is no
+hand-rolled balance arithmetic.
+
+### Off-chain
+
+|                      |                                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| The brief            | Only `terms_hash` — SHA-256 of the agreed scope — is stored. The text itself lives wherever the parties agreed.                     |
+| The delivery         | Only `delivery_hash` — SHA-256 of the delivered artifact or its URL — is written by `mark_delivered`.                               |
+| Attestation issuance | `scripts/attest-job.ts`, run by the RepuLink authority after a job settles. Not automatic, and not part of the release transaction. |
+| RPC                  | Helius (or any RPC) for reads. No indexer, no backend, no database.                                                                 |
+
+Hashes are commitments, not storage: the program can prove _which_ brief was
+agreed if someone produces it, but it cannot show you the brief.
+
+---
+
+## Attestations (SAS)
+
+When a job reaches a terminal state — `Released`, `Refunded` or `Resolved` — it
+can be attested through the [Solana Attestation Service](https://attest.solana.com)
+(`22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`).
+
+```bash
+npm run sas:attest-job -- <job-address>
+```
+
+|            |                                                                    |
+| ---------- | ------------------------------------------------------------------ |
+| Authority  | `HtvQNd9Ngm8q6HU4X9Uyq4V5DXzzQ8bARsYfeDYRTkY1`                     |
+| Credential | `J9ExNHgiyzVV7hduaeSL1wyyHz2vYgg7hcpeeWUcCgJg` (`RepuLink`)        |
+| Schema     | `A779c2vvVWv7vEe3sKsK2zGTKveAJwFDwbCxAnCYfAhc` (`repulink-job` v1) |
+| Fields     | `job`, `state`, `created_at`, `resolved_at`                        |
+
+The attestation nonce is the Job PDA, so each job maps to exactly one
+deterministic attestation address — discoverable by derivation, with nothing to
+index. Before signing, the script verifies that the account is owned by the
+RepuLink program, carries the `Job` discriminator, and matches the PDA
+re-derived from `(client, job_id)`; `resolved_at` comes from the block time of
+the job's last transaction rather than the local clock.
+
+The signing key is held by RepuLink — this is an issuer-attested record, not a
+trustless one. It lives in `~/.repulink/`, **outside the repository**, and can
+be relocated with `SAS_AUTHORITY_KEY_PATH`. Only the bootstrap script may create
+it; the attestation service refuses to run if it is missing rather than silently
+minting a new trust root.
+
+---
+
+## Tech stack
+
+**On-chain** — Rust, Anchor 0.32.1, `anchor-spl` for SPL Token and ATA CPIs.
+
+**Client** — React 19 + Vite + TypeScript, TailwindCSS 4,
+[`@solana/kit`](https://github.com/anza-xyz/kit) with `@solana/react-hooks` for
+wallet and transaction handling, and [Codama](https://github.com/codama-idl/codama)
+to generate the typed program client from the IDL. No hand-written instruction
+encoding.
+
+---
+
+## Getting started
 
 ### Prerequisites
 
-- Node.js 18+
-- Rust + Cargo
-- Solana CLI
-- Anchor CLI
+Node.js 18+, Rust + Cargo, Solana CLI, Anchor CLI.
 
-### 1. Clone and setup
+### 1. Install
 
 ```bash
-git clone https://github.com/YhonaPeguero/RepuLink..git repulink
+git clone https://github.com/YhonaPeguero/RepuLink.git repulink
 cd repulink
 npm install
 ```
 
-### 2. Environment variables
-
-Copy the example file and fill in your values:
+### 2. Environment
 
 ```bash
 cp .env.example .env
@@ -144,111 +217,121 @@ VITE_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=your_helius_api_key
 VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
 ```
 
-El program id vive en el cliente generado (`src/generated/repulink`); no hay que configurarlo.
+Only these two. The program ID ships inside the generated client
+(`src/generated/repulink`) and is not configurable at runtime. Get a Helius key
+at [dashboard.helius.dev](https://dashboard.helius.dev).
 
-Get your Helius API key at [dashboard.helius.dev](https://dashboard.helius.dev).
+`VITE_USDC_MINT` is any SPL mint with 6 decimals — devnet USDC from Circle's
+faucet, or a test mint you control.
 
-### 3. Build the Anchor program
+### 3. Build the program and regenerate the client
+
+```bash
+npm run setup          # anchor build + codama
+```
+
+### 4. Run
+
+```bash
+npm run dev            # http://localhost:5173
+```
+
+---
+
+## Tests
+
+15 integration tests run against [LiteSVM](https://github.com/LiteSVM/litesvm) —
+no validator, no deploy, under a second end to end.
 
 ```bash
 cd anchor
-anchor build
-anchor deploy
+cargo build-sbf        # LiteSVM loads target/deploy/repulink.so
+cargo test
 ```
 
-### 4. Regenerate Codama types
+**Escrow (11)** — happy path with exact balance assertions; `claim_timeout`
+after warping past the review window; refund before delivery and its rejection
+after; dispute resolved with a split; strangers rejected on every instruction;
+roles unable to swap instructions; `create_job` input validation including
+self-dealing; vault substitution rejected; invalid state transitions rejected;
+config admin-gated and fee-capped.
+
+**Badges (4)** — the legacy profile/endorsement module (see below).
+
+The fee assertions deliberately use an amount that does not divide evenly by the
+fee (`1_000_001` at 150 bps) so truncation is pinned down rather than assumed.
+
+### End-to-end on devnet
+
+Exercises the same instructions the UI sends, against the deployed program:
 
 ```bash
-cd ..
-npm run setup
+npx tsx scripts/e2e-escrow.ts
 ```
 
-### 5. Run the frontend
+Requires `~/.config/solana/id.json` funded with devnet SOL — it must be the
+program's upgrade authority if `Config` has not been initialised yet. The script
+creates its own 6-decimal test mint, runs the full happy path (create + fund
+atomically → deliver → release, asserting the fee split), then a dispute
+resolved 50/50, and prints Explorer links for every transaction.
 
-```bash
-npm run dev
-```
-
-Visit `http://localhost:5173`
+Transactions are confirmed by polling `getSignatureStatuses` instead of
+WebSocket subscriptions, which hang on the public devnet RPC.
 
 ---
 
-## Using Codespaces
-
-The repo includes a full Codespaces setup. Just open it in GitHub and click **Create codespace** — Rust, Solana CLI, Anchor, and Node are installed automatically.
-
-After the setup finishes, run:
-
-```bash
-export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-npm run dev
-```
-
----
-
-## Program ID
-
-```
-2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1
-```
-
-[View on Solana Explorer →](https://explorer.solana.com/address/2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1?cluster=devnet)
-
----
-
-## Project Structure
+## Project structure
 
 ```
 repulink/
-├── anchor/
-│   ├── programs/repulink/src/lib.rs   ← Anchor program
-│   ├── tests/repulink.ts              ← Integration tests
-│   └── Anchor.toml
-├── src/
-│   ├── pages/                         ← Route-level components
-│   │   ├── HomePage.tsx
-│   │   ├── DashboardPage.tsx
-│   │   ├── CreateBadgePage.tsx
-│   │   ├── ApproveBadgePage.tsx
-│   │   └── PublicProfilePage.tsx
-│   ├── components/
-│   │   ├── badge/                     ← BadgeCard, BadgeList
-│   │   ├── layout/                    ← Header, Layout
-│   │   ├── profile/                   ← ProfileEditor
-│   │   └── ui/                        ← StatusBadge
-│   ├── hooks/
-│   │   ├── useRepulink.ts             ← On-chain instructions
-│   │   └── useOnChainData.ts          ← Profile + badge fetching
-│   ├── generated/repulink/            ← Codama auto-generated client
-│   └── types/repulink.ts              ← Shared TypeScript types
-└── .env.example
+├── anchor/programs/repulink/
+│   ├── src/lib.rs              ← instruction handlers
+│   ├── src/escrow.rs           ← escrow accounts, contexts, events, payout helpers
+│   └── tests/{escrow,badges}.rs← LiteSVM integration tests
+├── scripts/
+│   ├── e2e-escrow.ts           ← devnet end-to-end
+│   ├── sas.ts                  ← SAS authority, credential, schema
+│   └── attest-job.ts           ← issue an attestation for a settled job
+└── src/
+    ├── pages/                  ← CreateJobPage, JobPage, Dashboard, PublicProfile…
+    ├── hooks/useEscrow.ts      ← builds and sends every escrow instruction
+    ├── lib/                    ← PDA derivation, confirmation, error mapping
+    └── generated/repulink/     ← Codama client (generated, do not edit)
 ```
 
 ---
 
-## Running Tests
+## Legacy: the endorsement module
 
-```bash
-cd anchor
-anchor test --skip-deploy
-```
+The program still exports `initialize_profile`, `create_badge`, `approve_badge`,
+`reject_badge`, `update_profile` and `close_profile` from an earlier iteration
+where clients endorsed freelancers directly, with routes still wired at
+`/badge/create` and `/approve/:freelancer/:badgeIndex`. It is tested and
+functional but independent of the escrow: it shares no accounts with `Job` or
+`Config`. The escrow flow above is what the project is about; the endorsement
+module is documented here so a reviewer reading `lib.rs` knows why those
+instructions exist.
 
-4 tests cover the full badge lifecycle:
-1. Creates a freelancer profile
-2. Creates a badge with Pending status
-3. Client approves the badge → status becomes Approved
-4. Cannot approve an already approved badge → expects `BadgeNotPending` error
+---
+
+## Known limitations
+
+- **Single-key arbiter.** Disputes resolve on one signature. See above.
+- **Attestations are issuer-signed.** A trusted RepuLink key vouches for job
+  outcomes; it is not derived trustlessly from chain state.
+- **Devnet only, unaudited.** No mainnet deployment and no third-party audit.
+- **`claim_timeout` requires an active freelancer.** If neither party acts after
+  delivery, funds stay in the vault indefinitely.
 
 ---
 
 ## Built with
 
-- [Solana](https://solana.com) — The fastest blockchain for this use case
-- [Anchor](https://anchor-lang.com) — Rust framework for Solana programs
-- [Helius](https://helius.dev) — RPC and DAS API
-- [Codama](https://github.com/codama-idl/codama) — Type-safe program client generation
-- [WayLearn](https://waylearn.io) — Hackathon organizer
+[Solana](https://solana.com) · [Anchor](https://anchor-lang.com) ·
+[Solana Attestation Service](https://attest.solana.com) ·
+[Helius](https://helius.dev) · [Codama](https://github.com/codama-idl/codama) ·
+[LiteSVM](https://github.com/LiteSVM/litesvm) · [WayLearn](https://waylearn.io)
 
 ---
 
-*RepuLink — Solana LATAM Hackathon 2026 by: [Yhona Peguero](https://www.linkedin.com/in/yhonatan-peguero/)*
+_RepuLink — Solana LATAM Hackathon 2026 by [Yhona Peguero](https://www.linkedin.com/in/yhonatan-peguero/)_

@@ -9,8 +9,9 @@
  * última transacción del job, no del reloj local.
  *
  * Uso: npm run sas:attest-job -- <job-address>
- * Requiere la keypair de la authority ya provisionada (scripts/.keys/);
- * opcionalmente fija SAS_AUTHORITY_ADDRESS para verificar su pubkey.
+ * Requiere la keypair de la authority ya provisionada (~/.repulink/, fuera del
+ * repo; reubicable con SAS_AUTHORITY_KEY_PATH); opcionalmente fija
+ * SAS_AUTHORITY_ADDRESS para verificar su pubkey.
  */
 import { address, fetchEncodedAccount } from "@solana/kit";
 import {

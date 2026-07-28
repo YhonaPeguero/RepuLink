@@ -29,9 +29,10 @@ lerna-debug.log*
 # Anchor build artifacts
 /anchor/.anchor/
 /anchor/target/
-scripts/.keys/
 
-# keypairs
+# keypairs — las llaves privadas viven en ~/.repulink/, fuera del repo.
+# scripts/.keys/ era la ubicación antigua: se ignora por si alguien la recrea.
 *keypair*.json
 id*.json
 .repulink/
+scripts/.keys/

@@ -41,6 +41,7 @@ import {
 } from "sas-lib";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { webcrypto } from "node:crypto";
+import { homedir } from "node:os";
 import path from "node:path";
 
 export const RPC_URL = "https://api.devnet.solana.com";
@@ -51,7 +52,14 @@ export const SCHEMA_VERSION = 1;
 // Layout compacto SAS: 12=string, 0=u8, 8=i64 (ver sas-lib utils)
 export const SCHEMA_LAYOUT = new Uint8Array([12, 0, 8, 8]);
 export const SCHEMA_FIELDS = ["job", "state", "created_at", "resolved_at"];
-const KEY_PATH = path.join(import.meta.dirname, ".keys", "attestation-authority.json");
+/**
+ * Keypair de la attestation authority. Vive FUERA del repositorio (por defecto
+ * ~/.repulink/) para que una llave privada nunca pueda acabar en un commit por
+ * descuido. Se puede reubicar con SAS_AUTHORITY_KEY_PATH.
+ */
+const KEY_PATH =
+  process.env.SAS_AUTHORITY_KEY_PATH ??
+  path.join(homedir(), ".repulink", "attestation-authority.json");
 export const MIN_BALANCE_LAMPORTS = 50_000_000n; // 0.05 SOL
 
 export const rpc = createSolanaRpc(RPC_URL);
