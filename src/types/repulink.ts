@@ -1,5 +1,5 @@
 // ── Badge status enum ──────────────────────────────────────────────────────
-export type BadgeStatus = 
+export type BadgeStatus =
   | { pending: Record<string, never> }
   | { approved: Record<string, never> }
   | { rejected: Record<string, never> };
@@ -56,7 +56,9 @@ export interface ApproveBadgeFormData {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-export function getBadgeStatusLabel(status: BadgeStatus): "Pending" | "Approved" | "Rejected" {
+export function getBadgeStatusLabel(
+  status: BadgeStatus
+): "Pending" | "Approved" | "Rejected" {
   if ("approved" in status) return "Approved";
   if ("rejected" in status) return "Rejected";
   return "Pending";

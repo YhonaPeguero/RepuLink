@@ -11,29 +11,33 @@
   --foreground: #ffffff;
   --border-strong: rgba(255, 255, 255, 0.12);
   --border-low: rgba(255, 255, 255, 0.06);
-  
+
   /* Paleta oficial RepuLink:
      primario #9945FF · secundario #3B82F6 · acento #FBBF24 */
-  --accent: #9945FF;
+  --accent: #9945ff;
   --accent-glow: rgba(153, 69, 255, 0.25);
   --accent-light: #b87aff;
 
-  --secondary: #3B82F6;
+  --secondary: #3b82f6;
   --secondary-glow: rgba(59, 130, 246, 0.25);
 
-  --accent-gold: #FBBF24;
+  --accent-gold: #fbbf24;
 
   /* Gradiente de marca */
-  --brand-gradient: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
-  
+  --brand-gradient: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--secondary) 100%
+  );
+
   --muted: #a1a1aa; /* zinc-400 */
   --cream: rgba(255, 255, 255, 0.05); /* Used for subtle fills */
-  
+
   --card: rgba(15, 15, 15, 0.6); /* Glassmorphism base */
   --card-foreground: #ffffff;
-  
+
   --radius: 1rem;
-  
+
   --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -47,7 +51,7 @@
   --color-border: var(--border-strong);
   --color-border-strong: var(--border-strong);
   --color-border-low: var(--border-low);
-  
+
   --color-primary: var(--accent);
   --color-primary-glow: var(--accent-glow);
   --color-primary-light: var(--accent-light);
@@ -55,15 +59,15 @@
   --color-secondary: var(--secondary);
   --color-secondary-glow: var(--secondary-glow);
   --color-accent-gold: var(--accent-gold);
-  
+
   --color-muted: var(--muted);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  
+
   --font-heading: var(--font-heading);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  
+
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
@@ -81,20 +85,35 @@
     color-scheme: dark;
     /* CSS-only static background for performance, mimicking radial gradients without paint costs */
     background-color: var(--background);
-    background-image: 
-      radial-gradient(ellipse at 50% 0%, rgba(153, 69, 255, 0.05) 0%, transparent 60%),
-      radial-gradient(ellipse at 10% 100%, rgba(30, 0, 80, 0.3) 0%, transparent 50%);
+    background-image:
+      radial-gradient(
+        ellipse at 50% 0%,
+        rgba(153, 69, 255, 0.05) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse at 10% 100%,
+        rgba(30, 0, 80, 0.3) 0%,
+        transparent 50%
+      );
     background-attachment: fixed;
     min-height: 100vh;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
   }
 
   /* Accessibility: Prefers Reduced Motion */
   @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after {
+    *,
+    ::before,
+    ::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -137,12 +156,12 @@
     box-shadow: 0 0 30px -10px var(--accent-glow);
     animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-  
+
   /* Animated blockchain grid background for Layout */
   .bg-grid-pattern {
-    background-image: 
-      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size: 40px 40px;
     mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
   }
@@ -152,14 +171,15 @@
     @apply relative overflow-hidden bg-white/5;
   }
   .shimmer-skeleton::after {
-    content: '';
+    content: "";
     @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent;
     animation: shimmer 1.5s infinite ease-out;
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 30px -10px var(--accent-glow);
   }
   50% {

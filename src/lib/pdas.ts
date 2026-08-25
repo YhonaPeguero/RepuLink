@@ -9,7 +9,7 @@ import { REPULINK_PROGRAM_ADDRESS } from "../generated/repulink";
 /** PDA del Job igual que el programa: seeds = [b"job", client, job_id le u64]. */
 export async function deriveJobPda(
   client: Address,
-  jobId: bigint,
+  jobId: bigint
 ): Promise<Address> {
   const [pda] = await getProgramDerivedAddress({
     programAddress: REPULINK_PROGRAM_ADDRESS,

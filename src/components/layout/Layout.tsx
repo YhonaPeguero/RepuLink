@@ -7,10 +7,10 @@ export function Layout({ children }: PropsWithChildren) {
     <div className="relative min-h-screen overflow-x-clip bg-bg1 text-foreground">
       {/* Animated Blockchain Grid */}
       <div className="fixed inset-0 pointer-events-none bg-grid-pattern opacity-40 z-0" />
-      
+
       <div className="relative z-10">
         <Header />
-        <motion.main 
+        <motion.main
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}

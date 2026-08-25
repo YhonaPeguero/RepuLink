@@ -48,6 +48,7 @@ Implementar el ciclo completo **crear trabajo → depositar USDC en escrow → e
 Contexto: el diagnóstico previo (ya lo tienes) mapeó todas las rutas hardcodeadas. El escrow nuevo debe nacer en la estructura limpia.
 
 **Task 0.1 — Mover `template_codespaces/` a la raíz.**
+
 - Borrar primero el `package-lock.json` huérfano de la raíz (`"name": "Solana-Hackathon-WayLearn"`, packages vacío).
 - Mover todo el contenido de `template_codespaces/` a la raíz del repo.
 - Fusionar `.gitignore` raíz con el del template; subir `.prettierrc`/`.prettierignore`.
@@ -55,19 +56,23 @@ Contexto: el diagnóstico previo (ya lo tienes) mapeó todas las rutas hardcodea
 - Verificación: `npm install && npm run build` en verde desde la raíz.
 
 **Task 0.2 — Purga de dead code.**
+
 - Borrar: `anchor/programs/repulink/src/tests.rs` (tests del vault del template), `src/components/VaultCard.tsx`, `src/generated/vault/`.
 - Desinstalar deps nunca importadas: `@privy-io/react-auth`, `@privy-io/wagmi`, `helius-sdk`, `@metaplex-foundation/*`, `umi` (verificar con grep antes de borrar cada una; Privy se re-agregará en Fase 3 solo si se usa).
 - Borrar `src/hooks/useReputationNFT.ts` y el botón que lo invoca en `ReputationCard.tsx` (construye una instrucción MPL Core inválida que nunca puede ejecutar).
 - Verificación: `npm run build` y `cargo build-sbf` en verde; `grep -r` confirma cero referencias a lo borrado.
 
 **Task 0.3 — Arreglar scripts de setup.**
+
 - `.devcontainer/setup.sh` y `local-setup.sh`: eliminar el `npx create-solana-dapp` (recrearía el template encima del código). Reemplazar por instalación de toolchain + `npm install` del proyecto real.
 - Actualizar `README.md`: rutas sin `template_codespaces/`, diagrama de estructura, ruta de la imagen de portada.
 
 **Task 0.4 — Fixes al programa de badges existente (solo estos tres, nada más).**
+
 1. `useOnChainData.ts:160` — memcmp: cambiar `badgeDiscriminator.toString("base64")` por `bs58.encode(badgeDiscriminator)`.
 2. `create_badge` — agregar `require!` de longitud/no-vacío para `client_email` (≤128 bytes), consistente con las demás validaciones.
 3. `close_profile` — agregar `require!(profile.badge_count == 0, ErrorCode::ProfileHasBadges)` para evitar el brickeo por re-inicialización.
+
 - Verificación: `anchor test` de badges en verde; la lista de badges carga en el frontend.
 - **NO** hacer más trabajo en el flujo de badges: no rediseñar autorización, no agregar close_badge, no tocar nada más. Ese flujo queda como legacy de perfil.
 
@@ -129,17 +134,17 @@ pub enum JobState { Created, Funded, Delivered, Released, Refunded, Disputed, Re
 
 ### Instrucciones
 
-| Instrucción | Signer | Transición | Efecto y constraints |
-|---|---|---|---|
-| `create_job(job_id, freelancer, amount, fee_bps_snapshot, terms_hash, review_window_secs)` | client | — → Created | `require!(freelancer != client)`; `require!(amount > 0)`; `review_window_secs` entre 86400 y 2592000 (1–30 días); copia `arbiter` y `fee_bps` desde Config |
-| `fund_job` | client | Created → Funded | Transfer USDC client → vault ATA por `amount` exacto; `has_one = client`; sella `funded_at` |
-| `mark_delivered(delivery_hash)` | freelancer | Funded → Delivered | `has_one = freelancer`; sella `delivered_at` |
-| `approve_release` | client | Delivered → Released | fee = `amount * fee_bps / 10000` → treasury ATA; resto → freelancer ATA; toda aritmética `checked_*` |
-| `claim_timeout` | freelancer | Delivered → Released | `require!(clock.unix_timestamp >= delivered_at + review_window_secs)`; mismo payout que approve_release |
-| `cancel_refund` | client | Created o Funded → Refunded | Solo antes de `mark_delivered`. Si Funded: devolver todo al client, sin fee |
-| `open_dispute` | client **o** freelancer | Funded o Delivered → Disputed | `require!(signer == job.client \|\| signer == job.freelancer)` |
-| `resolve_dispute(freelancer_amount)` | arbiter | Disputed → Resolved | `require!(signer == job.arbiter)`; `require!(freelancer_amount <= amount)`; fee sobre `freelancer_amount` → treasury; `freelancer_amount - fee` → freelancer; resto → client |
-| `close_job` | client | desde Released/Refunded/Resolved | Cierra Job y vault ATA (debe estar en 0); renta de vuelta al client |
+| Instrucción                                                                                | Signer                  | Transición                       | Efecto y constraints                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------ | ----------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create_job(job_id, freelancer, amount, fee_bps_snapshot, terms_hash, review_window_secs)` | client                  | — → Created                      | `require!(freelancer != client)`; `require!(amount > 0)`; `review_window_secs` entre 86400 y 2592000 (1–30 días); copia `arbiter` y `fee_bps` desde Config                   |
+| `fund_job`                                                                                 | client                  | Created → Funded                 | Transfer USDC client → vault ATA por `amount` exacto; `has_one = client`; sella `funded_at`                                                                                  |
+| `mark_delivered(delivery_hash)`                                                            | freelancer              | Funded → Delivered               | `has_one = freelancer`; sella `delivered_at`                                                                                                                                 |
+| `approve_release`                                                                          | client                  | Delivered → Released             | fee = `amount * fee_bps / 10000` → treasury ATA; resto → freelancer ATA; toda aritmética `checked_*`                                                                         |
+| `claim_timeout`                                                                            | freelancer              | Delivered → Released             | `require!(clock.unix_timestamp >= delivered_at + review_window_secs)`; mismo payout que approve_release                                                                      |
+| `cancel_refund`                                                                            | client                  | Created o Funded → Refunded      | Solo antes de `mark_delivered`. Si Funded: devolver todo al client, sin fee                                                                                                  |
+| `open_dispute`                                                                             | client **o** freelancer | Funded o Delivered → Disputed    | `require!(signer == job.client \|\| signer == job.freelancer)`                                                                                                               |
+| `resolve_dispute(freelancer_amount)`                                                       | arbiter                 | Disputed → Resolved              | `require!(signer == job.arbiter)`; `require!(freelancer_amount <= amount)`; fee sobre `freelancer_amount` → treasury; `freelancer_amount - fee` → freelancer; resto → client |
+| `close_job`                                                                                | client                  | desde Released/Refunded/Resolved | Cierra Job y vault ATA (debe estar en 0); renta de vuelta al client                                                                                                          |
 
 ### Seguridad obligatoria (bugs clásicos de Solana — no negociable)
 
@@ -173,6 +178,7 @@ Verificación de fase: `anchor test` en verde con todos los casos; regenerar cli
 ## Fase 2 — Atestación al liberar (SAS)
 
 **Task 2.1 — Spike SAS (timebox: medio día).** Emitir una atestación de prueba con el SDK de Solana Attestation Service en devnet, firmada por una keypair "attestation authority" de RepuLink, referenciando un Job PDA (pubkey del job + estado final + timestamps en el payload del schema).
+
 - Si el spike funciona: **Task 2.2a** — servicio backend mínimo (script Node, puede correr manual para el demo) que ante un Job en `Released`/`Resolved` emite la atestación SAS.
 - Si SAS da guerra (docs/SDK inmaduros): **Task 2.2b (fallback)** — cuenta `Attestation` PDA propia escrita por la authority, con los mismos campos. Documentar la decisión en el README.
 - Verificación: atestación visible/consultable en devnet, vinculada al Job del test end-to-end.
@@ -184,6 +190,7 @@ Verificación de fase: `anchor test` en verde con todos los casos; regenerar cli
 **Task 3.1 — Unificar stack.** Todo en `@solana/kit` + cliente Codama generado (patrón de `useRepulink.ts`, que es el bueno). Eliminar `@solana/web3.js` y `@coral-xyz/anchor` del frontend; reemplazar la deserialización manual de `useOnChainData.ts` por los decoders de `src/generated/repulink/accounts/`. Un solo RPC (Helius via env, con validación al arrancar: si falta la var, error claro).
 
 **Task 3.2 — Páginas del flujo escrow** (UI mínima funcional, sin pulir diseño):
+
 - Crear trabajo (client): form → hash del brief con SubtleCrypto → `create_job` + `fund_job` **en una sola transacción** (dos instrucciones, atómico: o el job nace fondeado o no nace — sin limbo Created sin fondos).
 - Vista del trabajo: estado actual, timestamps, countdown de la ventana de revisión, botones condicionales por rol conectado (deliver / release / dispute / refund).
 - Usar `useParams` de react-router (no parsear `window.location` a mano).

@@ -32,7 +32,10 @@ import {
   type KeyPairSigner,
   type Signature,
 } from "@solana/kit";
-import { getTransferSolInstruction, getCreateAccountInstruction } from "@solana-program/system";
+import {
+  getTransferSolInstruction,
+  getCreateAccountInstruction,
+} from "@solana-program/system";
 import {
   findAssociatedTokenPda,
   getCreateAssociatedTokenIdempotentInstructionAsync,
@@ -75,7 +78,7 @@ function tx(label: string, sig: string) {
 async function sendTx(
   feePayer: KeyPairSigner,
   ixs: Instruction[],
-  commitment: "confirmed" | "finalized" = "confirmed",
+  commitment: "confirmed" | "finalized" = "confirmed"
 ): Promise<Signature> {
   const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
   const signed = await pipe(
@@ -83,7 +86,7 @@ async function sendTx(
     (m) => setTransactionMessageFeePayerSigner(feePayer, m),
     (m) => appendTransactionMessageInstructions(ixs, m),
     (m) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-    signTransactionMessageWithSigners,
+    signTransactionMessageWithSigners
   );
   assertIsTransactionWithBlockhashLifetime(signed);
   // Envío raw + polling con getSignatureStatuses: nada de websockets, que en
@@ -133,8 +136,10 @@ async function main() {
   // ── Wallets ───────────────────────────────────────────────────────────────
   const admin = await createKeyPairSignerFromBytes(
     new Uint8Array(
-      JSON.parse(readFileSync(path.join(homedir(), ".config/solana/id.json"), "utf8")),
-    ),
+      JSON.parse(
+        readFileSync(path.join(homedir(), ".config/solana/id.json"), "utf8")
+      )
+    )
   );
   const client = await generateKeyPairSigner();
   const freelancer = await generateKeyPairSigner();
@@ -147,9 +152,21 @@ async function main() {
   // ── Fondos SOL para las wallets de prueba ─────────────────────────────────
   const sol = (n: number) => BigInt(Math.round(n * 1e9));
   await sendTx(admin, [
-    getTransferSolInstruction({ source: admin, destination: client.address, amount: sol(0.2) }),
-    getTransferSolInstruction({ source: admin, destination: freelancer.address, amount: sol(0.05) }),
-    getTransferSolInstruction({ source: admin, destination: arbiter.address, amount: sol(0.05) }),
+    getTransferSolInstruction({
+      source: admin,
+      destination: client.address,
+      amount: sol(0.2),
+    }),
+    getTransferSolInstruction({
+      source: admin,
+      destination: freelancer.address,
+      amount: sol(0.05),
+    }),
+    getTransferSolInstruction({
+      source: admin,
+      destination: arbiter.address,
+      amount: sol(0.05),
+    }),
   ]);
   console.log("wallets de prueba fondeadas");
 
@@ -192,9 +209,13 @@ async function main() {
   const configPda = await deriveConfigPda();
   const existingConfig = await fetchMaybeConfig(rpc, configPda);
   if (existingConfig.exists) {
-    console.log(`config ya existe (arbiter ${existingConfig.data.arbiter}) — usando el existente`);
+    console.log(
+      `config ya existe (arbiter ${existingConfig.data.arbiter}) — usando el existente`
+    );
     if (existingConfig.data.arbiter !== arbiter.address) {
-      console.log("  (la disputa se resolverá con el arbiter del config existente si difiere: se omite el flujo B)");
+      console.log(
+        "  (la disputa se resolverá con el arbiter del config existente si difiere: se omite el flujo B)"
+      );
     }
   } else {
     const sig = await sendTx(admin, [
@@ -230,13 +251,21 @@ async function main() {
         amount: amountA,
         feeBpsSnapshot: config.data.feeBps,
         termsHash: new Uint8Array(
-          await crypto.subtle.digest("SHA-256", new TextEncoder().encode("Brief E2E job A")),
+          await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode("Brief E2E job A")
+          )
         ),
         reviewWindowSecs: 86_400,
       }),
-      await getFundJobInstructionAsync({ client, job: jobA, mint, clientToken }),
+      await getFundJobInstructionAsync({
+        client,
+        job: jobA,
+        mint,
+        clientToken,
+      }),
     ],
-    "finalized",
+    "finalized"
   );
   tx("create_job+fund_job (atómico)", sig);
   console.log(`  job A: ${jobA}`);
@@ -246,7 +275,10 @@ async function main() {
       freelancer,
       job: jobA,
       deliveryHash: new Uint8Array(
-        await crypto.subtle.digest("SHA-256", new TextEncoder().encode("https://github.com/entrega-e2e")),
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode("https://github.com/entrega-e2e")
+        )
       ),
     }),
   ]);
@@ -274,17 +306,27 @@ async function main() {
         treasuryToken,
       }),
     ],
-    "finalized",
+    "finalized"
   );
   tx("approve_release", sig);
 
   const jobAAfter = await fetchJob(rpc, jobA);
   if (jobAAfter.data.state !== JobState.Released) {
-    throw new Error(`job A: estado ${JobState[jobAAfter.data.state]}, esperaba Released`);
+    throw new Error(
+      `job A: estado ${JobState[jobAAfter.data.state]}, esperaba Released`
+    );
   }
   console.log("  ✔ estado = Released");
-  assertEq("freelancer recibe 99 (100 - 1% fee)", await tokenBalance(freelancerToken), 99_000_000n);
-  assertEq("treasury recibe 1 (fee)", await tokenBalance(treasuryToken), 1_000_000n);
+  assertEq(
+    "freelancer recibe 99 (100 - 1% fee)",
+    await tokenBalance(freelancerToken),
+    99_000_000n
+  );
+  assertEq(
+    "treasury recibe 1 (fee)",
+    await tokenBalance(treasuryToken),
+    1_000_000n
+  );
 
   // ── Flujo B: disputa ──────────────────────────────────────────────────────
   if (config.data.arbiter === arbiter.address) {
@@ -306,9 +348,14 @@ async function main() {
           termsHash: new Uint8Array(32),
           reviewWindowSecs: 86_400,
         }),
-        await getFundJobInstructionAsync({ client, job: jobB, mint, clientToken }),
+        await getFundJobInstructionAsync({
+          client,
+          job: jobB,
+          mint,
+          clientToken,
+        }),
       ],
-      "finalized",
+      "finalized"
     );
     tx("create_job+fund_job B", sig);
     console.log(`  job B: ${jobB}`);
@@ -331,27 +378,47 @@ async function main() {
           freelancerAmount: 25_000_000n,
         }),
       ],
-      "finalized",
+      "finalized"
     );
     tx("resolve_dispute (25 freelancer / 25 client)", sig);
 
     const jobBAfter = await fetchJob(rpc, jobB);
     if (jobBAfter.data.state !== JobState.Resolved) {
-      throw new Error(`job B: estado ${JobState[jobBAfter.data.state]}, esperaba Resolved`);
+      throw new Error(
+        `job B: estado ${JobState[jobBAfter.data.state]}, esperaba Resolved`
+      );
     }
     console.log("  ✔ estado = Resolved");
     // freelancer: 99 (A) + 25 - 1% de 25 = 99 + 24.75
-    assertEq("freelancer acumula 123.75", await tokenBalance(freelancerToken), 123_750_000n);
-    assertEq("treasury acumula 1.25", await tokenBalance(treasuryToken), 1_250_000n);
+    assertEq(
+      "freelancer acumula 123.75",
+      await tokenBalance(freelancerToken),
+      123_750_000n
+    );
+    assertEq(
+      "treasury acumula 1.25",
+      await tokenBalance(treasuryToken),
+      1_250_000n
+    );
     // client: 1000 - 100 - 50 + 25 = 875
-    assertEq("client termina con 875", await tokenBalance(clientToken), 875_000_000n);
+    assertEq(
+      "client termina con 875",
+      await tokenBalance(clientToken),
+      875_000_000n
+    );
   }
 
   console.log("\n── Links de Explorer ──");
-  console.log(`job A: https://explorer.solana.com/address/${jobA}?cluster=devnet`);
+  console.log(
+    `job A: https://explorer.solana.com/address/${jobA}?cluster=devnet`
+  );
   for (const l of links) console.log(l);
-  console.log(`\nmint de prueba (ponlo en .env como VITE_USDC_MINT para probar la UI): ${mint}`);
-  console.log(`\njob A liberado — para la atestación SAS: npx tsx scripts/attest-job.ts ${jobA}`);
+  console.log(
+    `\nmint de prueba (ponlo en .env como VITE_USDC_MINT para probar la UI): ${mint}`
+  );
+  console.log(
+    `\njob A liberado — para la atestación SAS: npx tsx scripts/attest-job.ts ${jobA}`
+  );
 }
 
 main().catch((err) => {

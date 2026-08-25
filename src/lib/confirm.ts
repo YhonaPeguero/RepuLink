@@ -25,13 +25,17 @@ export class ConfirmationTimeoutError extends Error {
   constructor(commitment: string, signature: string) {
     super(
       `Timed out waiting for "${commitment}" on transaction ${signature}. ` +
-        `Its outcome is unknown; check the explorer before retrying.`,
+        `Its outcome is unknown; check the explorer before retrying.`
     );
     this.name = "ConfirmationTimeoutError";
   }
 }
 
-const LEVEL: Record<string, number> = { processed: 0, confirmed: 1, finalized: 2 };
+const LEVEL: Record<string, number> = {
+  processed: 0,
+  confirmed: 1,
+  finalized: 2,
+};
 
 /**
  * Espera a que una firma alcance el commitment pedido. Éxito solo si el
@@ -43,7 +47,7 @@ export async function awaitSignatureCommitment(
   rpc: MinimalRpc,
   signature: Signature,
   commitment: "confirmed" | "finalized",
-  timeoutMs = 90_000,
+  timeoutMs = 90_000
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   const target = LEVEL[commitment];
