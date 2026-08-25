@@ -30,7 +30,9 @@ export function CreateJobPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -90,7 +92,10 @@ export function CreateJobPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass-panel space-y-5 rounded-2xl p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="glass-panel space-y-5 rounded-2xl p-6"
+        >
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-muted">
               Freelancer wallet
@@ -106,7 +111,7 @@ export function CreateJobPage() {
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-muted">
-              Amount (USDC)
+              Amount
             </span>
             <input
               name="amount"
@@ -120,7 +125,7 @@ export function CreateJobPage() {
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-muted">
-              Brief (hashed on-chain as proof of the agreed terms)
+              Brief — only its SHA-256 goes on-chain; keep the text yourself
             </span>
             <textarea
               name="brief"

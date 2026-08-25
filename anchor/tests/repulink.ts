@@ -29,18 +29,22 @@ describe("repulink", () => {
           systemProgram: SystemProgram.programId,
         })
         .rpc();
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Profile may already exist from a previous run — skip
-      if (!err.message.includes("already in use")) throw err;
+      if (!(err instanceof Error) || !err.message.includes("already in use")) {
+        throw err;
+      }
     }
 
-    const profileAccount = await program.account.freelancerProfile.fetch(profilePda);
+    const profileAccount =
+      await program.account.freelancerProfile.fetch(profilePda);
     assert.ok(profileAccount.owner.equals(freelancer.publicKey));
     assert.ok(profileAccount.badgeCount >= 0);
   });
 
   it("Creates a badge with Pending status", async () => {
-    const profileAccount = await program.account.freelancerProfile.fetch(profilePda);
+    const profileAccount =
+      await program.account.freelancerProfile.fetch(profilePda);
     const badgeIndex = profileAccount.badgeCount;
 
     const [badgePda] = PublicKey.findProgramAddressSync(
@@ -76,7 +80,8 @@ describe("repulink", () => {
   });
 
   it("Client approves the badge with identity → status becomes Approved", async () => {
-    const profileAccount = await program.account.freelancerProfile.fetch(profilePda);
+    const profileAccount =
+      await program.account.freelancerProfile.fetch(profilePda);
     const badgeIndex = profileAccount.badgeCount - 1;
 
     const [badgePda] = PublicKey.findProgramAddressSync(
@@ -112,7 +117,8 @@ describe("repulink", () => {
   });
 
   it("Cannot approve an already approved badge → expect BadgeNotPending error", async () => {
-    const profileAccount = await program.account.freelancerProfile.fetch(profilePda);
+    const profileAccount =
+      await program.account.freelancerProfile.fetch(profilePda);
     const badgeIndex = profileAccount.badgeCount - 1;
 
     const [badgePda] = PublicKey.findProgramAddressSync(
@@ -135,8 +141,13 @@ describe("repulink", () => {
         .rpc();
 
       assert.fail("Expected transaction to fail with BadgeNotPending error");
-    } catch (err: any) {
-      const anchorError = anchor.AnchorError.parse(err.logs);
+    } catch (err: unknown) {
+      const logs =
+        typeof err === "object" && err !== null && "logs" in err
+          ? (err as { logs?: unknown }).logs
+          : undefined;
+      assert.isArray(logs, "Expected transaction logs");
+      const anchorError = anchor.AnchorError.parse(logs as string[]);
       assert.isNotNull(anchorError, "Expected an AnchorError");
       assert.equal(anchorError!.error.errorCode.code, "BadgeNotPending");
     }

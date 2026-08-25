@@ -1,16 +1,45 @@
 # RepuLink
 
-![Demo Preview](./src/assets/portada.png)
-
 > **Escrow for freelance work on Solana, with a portable reputation trail.**
-> A client locks USDC in a program-owned vault, the freelancer delivers, and the
-> funds are released against an on-chain state machine. Every settled job can be
-> attested through the Solana Attestation Service, so the freelancer keeps a
-> verifiable track record that no platform owns.
+> A client locks funds in a program-owned vault, the freelancer delivers, and the
+> funds are released against an on-chain state machine. A job that is delivered
+> and released can be attested through the Solana Attestation Service, so the
+> freelancer keeps a verifiable track record that no platform owns.
 
 Built on **Solana** · Submitted to **WayLearn x Solana Foundation Hackathon 2026**
 
+## Who this is for
+
+Freelancers and clients who are **already crypto-native** — people invoicing
+DAOs, protocols and web3 projects in stablecoins today. That is the segment
+where the problem is felt and where the product can be used without hand-holding:
+it needs a browser wallet and an SPL token, and there is no fiat onramp,
+no custody and no embedded wallet yet.
+
+It is deliberately **not** aimed at the general freelancer market. See
+[`docs/gtm.md`](./docs/gtm.md).
+
 **Program ID (devnet):** [`2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1`](https://explorer.solana.com/address/2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1?cluster=devnet)
+
+### Try it on devnet
+
+Five jobs are seeded on devnet, covering the key states of the lifecycle
+(`Created`, `Refunded` and `Disputed` are not among them). Run
+`npm run dev` and open any of them at `/job/<address>` — no wallet needed to
+read, and they are listed in the dashboard:
+
+| State                      | Job                                                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Funded                     | [`5C51c6jn…Zx9bK`](https://explorer.solana.com/address/5C51c6jnpxJGBpBVzDfjpocWWb2gQxogCS3Dw62Zx9bK?cluster=devnet) |
+| Delivered                  | [`GEuRR4qY…aVfbC`](https://explorer.solana.com/address/GEuRR4qYY6HmH1XK4DMH4eza4KKnawLdpCrWBV9aVfbC?cluster=devnet) |
+| Released **+ attested**    | [`Diqr5i19…Nj4kF`](https://explorer.solana.com/address/Diqr5i19MsKPiYYqydZtqyEfhiWusfMdTMJK8UPNj4kF?cluster=devnet) |
+| Released                   | [`92b9sExj…2VoRW`](https://explorer.solana.com/address/92b9sExjPbGkWsEqvmnmax2VdUAbit6qVThZVGQ2VoRW?cluster=devnet) |
+| Resolved (after a dispute) | [`G8yZcYFG…qoG4e`](https://explorer.solana.com/address/G8yZcYFG4fvvWvxM8BpMJZtYWRkqPnyhcTSR4ZWqoG4e?cluster=devnet) |
+
+> **These jobs do not settle in Circle USDC.** They use
+> `493AbaKC2R8VrmYz7oFWk6JD7UkMeozcfSLJcrQUc4Wj`, a 6-decimal SPL test token the
+> team can mint. The program accepts **any** SPL mint — it has no allowlist — so
+> the UI shows the mint address on every job rather than assuming USDC.
 
 ---
 
@@ -33,7 +62,7 @@ public, verifiable record tied to the freelancer's wallet.
   client                        program                      freelancer
     │                              │                              │
     │  create_job ────────────────►│  Created                     │
-    │  fund_job (USDC → vault) ───►│  Funded                      │
+    │  fund_job (SPL → vault) ────►│  Funded                      │
     │                              │◄──────── mark_delivered ─────│
     │                              │  Delivered                   │
     │                              │  review window starts        │
@@ -78,7 +107,9 @@ tests below cover the invalid transitions and the role-swap attempts.
 | Vault substitution is rejected                            | the vault is the ATA of the `Job` PDA; constraints re-derive it                                         |
 
 **Fees.** `fee_bps` is copied from `Config` into the `Job` at creation, so a
-later `update_config` never changes the economics of a job already in flight.
+later `update_config` cannot change the _rate_ of a job already in flight. The
+treasury is **not** snapshotted, though: the fee destination is read from the
+live `Config` at payout time (see Known limitations).
 On release, the fee goes to the treasury's token account and the remainder to
 the freelancer. On a dispute, the fee applies only to the arbiter-assigned
 `freelancer_amount`; the client's share is returned untouched.
@@ -150,27 +181,39 @@ agreed if someone produces it, but it cannot show you the brief.
 
 ## Attestations (SAS)
 
-When a job reaches a terminal state — `Released`, `Refunded` or `Resolved` — it
-can be attested through the [Solana Attestation Service](https://attest.solana.com)
+A job that was **delivered and released** can be attested through the
+[Solana Attestation Service](https://attest.solana.com)
 (`22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`).
+
+The script deliberately refuses the other terminal states. `Refunded` is a
+cancelled agreement, not work history. `Resolved` is refused too, for a subtler
+reason: the `Job` account keeps the final state but not the `freelancer_amount`
+the arbiter chose, and that amount may have been zero — so until the script
+decodes the `resolve_dispute` instruction it cannot prove the freelancer was
+paid, and it fails closed rather than minting reputation it cannot back.
 
 ```bash
 npm run sas:attest-job -- <job-address>
 ```
 
-|            |                                                                    |
-| ---------- | ------------------------------------------------------------------ |
-| Authority  | `HtvQNd9Ngm8q6HU4X9Uyq4V5DXzzQ8bARsYfeDYRTkY1`                     |
-| Credential | `J9ExNHgiyzVV7hduaeSL1wyyHz2vYgg7hcpeeWUcCgJg` (`RepuLink`)        |
-| Schema     | `A779c2vvVWv7vEe3sKsK2zGTKveAJwFDwbCxAnCYfAhc` (`repulink-job` v1) |
-| Fields     | `job`, `state`, `created_at`, `resolved_at`                        |
+|            |                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| Authority  | `HtvQNd9Ngm8q6HU4X9Uyq4V5DXzzQ8bARsYfeDYRTkY1`                                                                |
+| Credential | `J9ExNHgiyzVV7hduaeSL1wyyHz2vYgg7hcpeeWUcCgJg` (`RepuLink`)                                                   |
+| Schema v1  | `A779c2vvVWv7vEe3sKsK2zGTKveAJwFDwbCxAnCYfAhc` — live on devnet; the existing attestation was issued under it |
+| Schema v2  | `EhYEKpARyD3vUW64xnHGRmutrkyYAm69RDaavPiE7yYC` — what `attest-job` now targets, **not created on devnet yet** |
+| Fields v1  | `job`, `state`, `created_at`, `resolved_at`                                                                   |
+| Fields v2  | v1 plus `freelancer`, `client`, `mint`, `amount`, so the record survives the `Job` account being closed       |
 
-The attestation nonce is the Job PDA, so each job maps to exactly one
-deterministic attestation address — discoverable by derivation, with nothing to
-index. Before signing, the script verifies that the account is owned by the
+The attestation nonce is the Job PDA, so each job maps to a deterministic
+attestation address — discoverable by derivation, with nothing to index. The
+address also depends on the schema, so a job attested under both v1 and v2 has
+two addresses; the UI looks both up. Before signing, the script verifies that the account is owned by the
 RepuLink program, carries the `Job` discriminator, and matches the PDA
-re-derived from `(client, job_id)`; `resolved_at` comes from the block time of
-the job's last transaction rather than the local clock.
+re-derived from `(client, job_id)`. `resolved_at` comes from the block time of
+the job's last transaction rather than the local clock — which is not the same
+as proving it was the settling transaction: a later transfer touching the job
+would move that timestamp.
 
 The signing key is held by RepuLink — this is an issuer-attested record, not a
 trustless one. It lives in `~/.repulink/`, **outside the repository**, and can
@@ -214,15 +257,19 @@ cp .env.example .env
 
 ```env
 VITE_HELIUS_RPC_URL=https://devnet.helius-rpc.com/?api-key=your_helius_api_key
-VITE_USDC_MINT=4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU
+VITE_USDC_MINT=493AbaKC2R8VrmYz7oFWk6JD7UkMeozcfSLJcrQUc4Wj
 ```
 
 Only these two. The program ID ships inside the generated client
 (`src/generated/repulink`) and is not configurable at runtime. Get a Helius key
 at [dashboard.helius.dev](https://dashboard.helius.dev).
 
-`VITE_USDC_MINT` is any SPL mint with 6 decimals — devnet USDC from Circle's
-faucet, or a test mint you control.
+`VITE_USDC_MINT` is any SPL mint with 6 decimals. The value above is the demo
+token the seeded jobs use — a test mint the team can issue, **not** Circle USDC.
+For Circle's devnet USDC use `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` and
+fund the wallets from their faucet; `seed-demo.ts` cannot mint that one. The UI
+only prints "USDC" when the mint is actually one of Circle's; anything else is
+shown as a demo token with its mint address next to it.
 
 ### 3. Build the program and regenerate the client
 
@@ -292,10 +339,15 @@ repulink/
 │   ├── e2e-escrow.ts           ← devnet end-to-end
 │   ├── sas.ts                  ← SAS authority, credential, schema
 │   └── attest-job.ts           ← issue an attestation for a settled job
+├── docs/
+│   ├── gtm.md                  ← segment, channels, next steps
+│   ├── ecosystem.md            ← grants, accelerators, partners
+│   └── validation/             ← survey data and pilot journey template
 └── src/
-    ├── pages/                  ← CreateJobPage, JobPage, Dashboard, PublicProfile…
+    ├── pages/                  ← CreateJobPage, JobPage, Dashboard, PublicProfile
     ├── hooks/useEscrow.ts      ← builds and sends every escrow instruction
-    ├── lib/                    ← PDA derivation, confirmation, error mapping
+    ├── hooks/useMyJobs.ts      ← lists a wallet's jobs (client and freelancer)
+    ├── lib/                    ← PDA derivation, confirmation, error mapping, SAS reads
     └── generated/repulink/     ← Codama client (generated, do not edit)
 ```
 
@@ -305,9 +357,10 @@ repulink/
 
 The program still exports `initialize_profile`, `create_badge`, `approve_badge`,
 `reject_badge`, `update_profile` and `close_profile` from an earlier iteration
-where clients endorsed freelancers directly, with routes still wired at
-`/badge/create` and `/approve/:freelancer/:badgeIndex`. It is independent of the
-escrow: it shares no accounts with `Job` or `Config`.
+where clients endorsed freelancers directly. **Its routes have been removed
+from the app**, so the instructions remain callable on-chain but nothing in the
+UI reaches them. It is independent of the escrow: it shares no accounts with
+`Job` or `Config`.
 
 **It is deprecated, and it is not part of what we are asking reviewers to look
 at.** It is documented here only so that a reviewer reading `lib.rs` knows why
@@ -334,6 +387,31 @@ claim someone makes — it is a side effect of a payment that actually happened.
 
 ---
 
+## What changed during the incubation
+
+The starting point was a different product: freelancers minted **declarative
+badges** and asked clients to endorse them. That design had a flaw that no
+amount of polish would fix — **nothing tied the approver to any real work.** A
+signature proves that _someone_ signed, not that a working relationship existed.
+
+The current architecture derives approval authority from money instead:
+`approve_release` requires `signer.key() == job.client`, and the client is by
+construction the wallet that funded the vault. An endorsement stopped being a
+claim someone makes and became a side effect of a payment that actually
+happened.
+
+|                   | Before                        | Now                                              |
+| ----------------- | ----------------------------- | ------------------------------------------------ |
+| Reputation source | Badge approved by any signer  | Job funded, delivered and released on-chain      |
+| Who can vouch     | Anyone with a wallet          | Only the wallet that put money in the vault      |
+| Where it lives    | A program account owned by us | An attestation in the Solana Attestation Service |
+| Payment           | Out of scope                  | Escrowed in a PDA-owned vault, 1% fee            |
+
+The endorsement module still exists in the program and is documented below as
+deprecated. As of this revision it is **no longer reachable from the UI**.
+
+---
+
 ## Known limitations
 
 - **Single-key arbiter.** Disputes resolve on one signature. See above.
@@ -342,6 +420,17 @@ claim someone makes — it is a side effect of a payment that actually happened.
 - **Devnet only, unaudited.** No mainnet deployment and no third-party audit.
 - **`claim_timeout` requires an active freelancer.** If neither party acts after
   delivery, funds stay in the vault indefinitely.
+- **Any SPL mint is accepted.** `create_job` does not check the mint against an
+  allowlist, so a job can settle in a worthless token. The UI shows the mint on
+  every job for this reason; an `accepted_mint` in `Config` is the real fix.
+- **No embedded wallets.** Connecting requires an installed browser wallet.
+  This is the blocker for onboarding anyone who is not already crypto-native.
+- **Attestations are issued manually** by an operator running
+  `npm run sas:attest-job`. They are not part of the release transaction, and
+  `close_job` can delete a settled job before it is attested.
+- **The treasury is not snapshotted.** `fee_bps` and `arbiter` are frozen into
+  the `Job` at creation, but the fee destination is read from the live `Config`,
+  so `update_config` redirects fees on jobs already in flight.
 
 ---
 
@@ -360,4 +449,4 @@ MIT — see [LICENSE](./LICENSE).
 
 ---
 
-_RepuLink — Solana LATAM Hackathon 2026 by [Yhona Peguero](https://www.linkedin.com/in/yhonatan-peguero/)_
+_RepuLink — built by [Yhona Peguero](https://www.linkedin.com/in/yhonatan-peguero/)_

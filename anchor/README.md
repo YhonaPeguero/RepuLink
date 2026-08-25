@@ -69,8 +69,17 @@ Each user gets their own vault derived from their wallet address.
 
 ## Testing
 
-Run the Anchor tests:
+From the repository root, build the current SBF binary and run the Rust tests
+against LiteSVM. This does not connect to devnet or require a local validator:
 
 ```bash
-anchor test --skip-deploy
+npm run anchor-test
+```
+
+The suite contains 15 integration tests (11 escrow and 4 legacy badge tests),
+plus the program ID unit test. After an SBF build, it can also be run directly:
+
+```bash
+cd anchor
+cargo test -p repulink
 ```

@@ -1,6 +1,6 @@
 import { useWalletConnection } from "@solana/react-hooks";
 import { motion } from "framer-motion";
-import { Wallet, LogOut } from "lucide-react";
+import { Wallet, LogOut, Plus } from "lucide-react";
 const logo = "/logo-repulink.png";
 
 export function Header() {
@@ -21,10 +21,17 @@ export function Header() {
             whileHover={{ scale: 1.05, rotate: 5 }}
             className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center overflow-hidden rounded-xl shadow-[0_0_15px_rgba(153,69,255,0.4)] border border-primary/20 bg-primary/10"
           >
-            <img src={logo} alt="RepuLink" className="h-full w-full object-cover" />
+            <img
+              src={logo}
+              alt="RepuLink"
+              className="h-full w-full object-cover"
+            />
           </motion.div>
           <span className="text-xl font-bold tracking-tight text-foreground ml-1">
-            Repu<span className="text-primary glow-text transition-all duration-300 group-hover:neon-text">Link</span>
+            Repu
+            <span className="text-primary glow-text transition-all duration-300 group-hover:neon-text">
+              Link
+            </span>
           </span>
           <span className="ml-2 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-light">
             Devnet
@@ -35,12 +42,20 @@ export function Header() {
         <div className="flex items-center gap-3">
           {status === "connected" && shortAddress ? (
             <>
-              <a
-                href="/dashboard"
-                className="hidden sm:inline-flex items-center rounded-xl glass-panel glass-panel-hover px-4 py-2 text-sm font-medium transition"
-              >
-                Dashboard
-              </a>
+              <nav className="hidden items-center gap-1 sm:flex">
+                <a
+                  href="/dashboard"
+                  className="inline-flex items-center rounded-xl glass-panel glass-panel-hover px-4 py-2 text-sm font-medium transition"
+                >
+                  My jobs
+                </a>
+                <a
+                  href="/job/create"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light transition hover:bg-primary/20"
+                >
+                  <Plus className="h-3.5 w-3.5" /> New job
+                </a>
+              </nav>
 
               <div className="flex items-center gap-2 rounded-xl glass-panel px-4 py-2 border-primary/20 bg-primary/5">
                 <span className="h-2 w-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)] animate-pulse" />

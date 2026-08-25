@@ -12,7 +12,11 @@ interface ProfileEditorProps {
   onUpdate: () => void;
 }
 
-export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEditorProps) {
+export function ProfileEditor({
+  profile,
+  walletAddress,
+  onUpdate,
+}: ProfileEditorProps) {
   const { updateProfile, closeProfile, isSending } = useRepulink();
 
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -59,8 +63,8 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
       setIsEditingUsername(false);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       onUpdate();
-    } catch (err: any) {
-      setTxStatus(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setTxStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -73,8 +77,8 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
       setTxStatus("Profile closed.");
       await new Promise((resolve) => setTimeout(resolve, 2000));
       onUpdate();
-    } catch (err: any) {
-      setTxStatus(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setTxStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -98,7 +102,7 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
             ) : (
               displayUsername.slice(0, 2).toUpperCase()
             )}
-            
+
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
               <Camera className="h-6 w-6 text-white" />
@@ -120,7 +124,7 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
         <div className="flex-1 space-y-2">
           <AnimatePresence mode="wait">
             {isEditingUsername ? (
-              <motion.div 
+              <motion.div
                 key="edit"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -157,7 +161,7 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
                 </div>
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 key="view"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -188,7 +192,7 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
       {/* Status */}
       <AnimatePresence>
         {txStatus && (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -203,7 +207,7 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
       <div className="border-t border-white/5 pt-5">
         <AnimatePresence mode="wait">
           {showDeleteConfirm ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
@@ -211,7 +215,8 @@ export function ProfileEditor({ profile, walletAddress, onUpdate }: ProfileEdito
             >
               <p className="text-sm text-red-400 font-medium flex items-center gap-2">
                 <Trash2 className="h-4 w-4" />
-                This will permanently close your profile on-chain and return your rent SOL. Are you absolute sure?
+                This will permanently close your profile on-chain and return
+                your rent SOL. Are you absolute sure?
               </p>
               <div className="flex gap-2">
                 <button

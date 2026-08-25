@@ -8,7 +8,7 @@ const rpcUrl = import.meta.env.VITE_HELIUS_RPC_URL as string | undefined;
 if (!rpcUrl) {
   throw new Error(
     "Falta VITE_HELIUS_RPC_URL en el entorno. Copia .env.example a .env y " +
-      "pon tu endpoint RPC de Helius (devnet).",
+      "pon tu endpoint RPC de Helius (devnet)."
   );
 }
 
@@ -18,8 +18,8 @@ const usdcMint = import.meta.env.VITE_USDC_MINT as string | undefined;
 
 if (!usdcMint) {
   throw new Error(
-    "Falta VITE_USDC_MINT en el entorno. Usa el mint de USDC devnet de " +
-      ".env.example (el mint nunca va hardcodeado; ver spec).",
+    "Falta VITE_USDC_MINT en el entorno. Copia el mint de .env.example " +
+      "(el mint nunca va hardcodeado; ver spec)."
   );
 }
 

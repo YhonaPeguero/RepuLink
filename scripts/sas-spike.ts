@@ -12,7 +12,11 @@
  * (scripts/attest-job.ts), no hace falta el fallback 2.2b.
  */
 import { airdropFactory, lamports, type KeyPairSigner } from "@solana/kit";
-import { deserializeAttestationData, fetchAttestation, fetchSchema } from "sas-lib";
+import {
+  deserializeAttestationData,
+  fetchAttestation,
+  fetchSchema,
+} from "sas-lib";
 import { JobState } from "../src/generated/repulink/types/jobState";
 import {
   MIN_BALANCE_LAMPORTS,
@@ -26,7 +30,9 @@ import {
 
 async function ensureFunds(authority: KeyPairSigner): Promise<void> {
   const { value: balance } = await rpc.getBalance(authority.address).send();
-  console.log(`authority ${authority.address} — balance ${Number(balance) / 1e9} SOL`);
+  console.log(
+    `authority ${authority.address} — balance ${Number(balance) / 1e9} SOL`
+  );
   if (balance >= MIN_BALANCE_LAMPORTS) return;
 
   console.log("pidiendo airdrop de 1 SOL en devnet...");
@@ -40,7 +46,7 @@ async function ensureFunds(authority: KeyPairSigner): Promise<void> {
   } catch (err) {
     console.error(
       `airdrop falló (rate limit habitual en devnet). Fondea manualmente:\n` +
-        `  https://faucet.solana.com → ${authority.address}\ny reintenta.`,
+        `  https://faucet.solana.com → ${authority.address}\ny reintenta.`
     );
     throw err;
   }
@@ -50,7 +56,8 @@ async function main() {
   const authority = await loadAuthority({ allowCreate: true });
   await ensureFunds(authority);
 
-  const { credentialPda, schemaPda } = await ensureCredentialAndSchema(authority);
+  const { credentialPda, schemaPda } =
+    await ensureCredentialAndSchema(authority);
 
   // Job PDA de prueba: job_id único por ejecución. En producción el job
   // existirá on-chain; para el spike basta con la dirección derivada.
@@ -69,7 +76,11 @@ async function main() {
       state: JobState.Released,
       created_at: now - 3600n,
       resolved_at: now,
-    },
+      freelancer: authority.address,
+      client: authority.address,
+      mint: authority.address,
+      amount: 0n,
+    }
   );
 
   // Verificación: leer la atestación de la red y deserializar el payload.
@@ -77,13 +88,16 @@ async function main() {
   const attestation = await fetchAttestation(rpc, attestationPda);
   const decoded = deserializeAttestationData<Record<string, unknown>>(
     schema.data,
-    new Uint8Array(attestation.data.data),
+    new Uint8Array(attestation.data.data)
   );
-  console.log("payload on-chain:", JSON.stringify(decoded, (_, v) =>
-    typeof v === "bigint" ? v.toString() : v,
-  ));
   console.log(
-    `explorer: https://explorer.solana.com/address/${attestationPda}?cluster=devnet`,
+    "payload on-chain:",
+    JSON.stringify(decoded, (_, v) =>
+      typeof v === "bigint" ? v.toString() : v
+    )
+  );
+  console.log(
+    `explorer: https://explorer.solana.com/address/${attestationPda}?cluster=devnet`
   );
 }
 

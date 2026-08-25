@@ -20,17 +20,14 @@ import { fetchMaybeJob, type Job } from "../generated/repulink/accounts/job";
 import { JobState } from "../generated/repulink/types/jobState";
 import { useEscrow } from "../hooks/useEscrow";
 import { formatUsdc } from "../lib/usdc";
+import { STATE_META, TERMINAL_STATES } from "../lib/job-state";
+import {
+  findJobAttestation,
+  explorerAddressUrl,
+  type JobAttestation,
+} from "../lib/sas";
+import { tokenLabel } from "../lib/tokens";
 import { usdcToBaseUnits } from "../lib/usdc";
-
-const STATE_META: Record<JobState, { label: string; className: string }> = {
-  [JobState.Created]: { label: "Created (unfunded)", className: "text-muted border-border-strong" },
-  [JobState.Funded]: { label: "Funded", className: "text-secondary border-secondary/40" },
-  [JobState.Delivered]: { label: "Delivered", className: "text-accent-gold border-accent-gold/40" },
-  [JobState.Released]: { label: "Released", className: "text-green-400 border-green-400/40" },
-  [JobState.Refunded]: { label: "Refunded", className: "text-muted border-border-strong" },
-  [JobState.Disputed]: { label: "Disputed", className: "text-red-400 border-red-400/40" },
-  [JobState.Resolved]: { label: "Resolved", className: "text-green-400 border-green-400/40" },
-};
 
 const STAGE_LABEL: Record<string, string> = {
   preparing: "Preparing transaction...",
@@ -40,7 +37,9 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 function ts(seconds: bigint): string {
-  return seconds === 0n ? "—" : new Date(Number(seconds) * 1000).toLocaleString();
+  return seconds === 0n
+    ? "—"
+    : new Date(Number(seconds) * 1000).toLocaleString();
 }
 
 function useCountdown(deadlineSecs: number | null): string | null {
@@ -72,6 +71,8 @@ export function JobPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [deliveryRef, setDeliveryRef] = useState("");
   const [freelancerAmount, setFreelancerAmount] = useState("");
+  const [attestation, setAttestation] = useState<JobAttestation | null>(null);
+  const [isCheckingAttestation, setIsCheckingAttestation] = useState(false);
 
   const jobAddress = useMemo<Address | null>(() => {
     try {
@@ -103,6 +104,30 @@ export function JobPage() {
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // La atestación solo existe una vez el job liquidó; se consulta aparte para
+  // que un fallo de SAS nunca impida renderizar el job.
+  useEffect(() => {
+    if (!jobAddress || !job || !TERMINAL_STATES.has(job.state)) {
+      setAttestation(null);
+      return;
+    }
+    let cancelled = false;
+    setIsCheckingAttestation(true);
+    findJobAttestation(client.runtime.rpc, jobAddress)
+      .then((found) => {
+        if (!cancelled) setAttestation(found);
+      })
+      .catch(() => {
+        if (!cancelled) setAttestation(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsCheckingAttestation(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [client, jobAddress, job]);
 
   const reviewDeadline =
     job && job.state === JobState.Delivered
@@ -193,7 +218,9 @@ export function JobPage() {
               title="Refresh"
               className="rounded-xl p-2 text-muted transition hover:text-foreground"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         </div>
@@ -201,11 +228,24 @@ export function JobPage() {
         {/* Datos */}
         <div className="glass-panel grid grid-cols-1 gap-4 rounded-2xl p-6 sm:grid-cols-2">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted">Amount</p>
+            <p className="text-xs uppercase tracking-wider text-muted">
+              Amount
+            </p>
             <p className="text-xl font-bold">
-              {formatUsdc(job.amount)} <span className="text-sm text-muted">USDC</span>
+              {formatUsdc(job.amount)}{" "}
+              <span className="text-sm text-muted">{tokenLabel(job.mint)}</span>
             </p>
             <p className="text-xs text-muted">fee {job.feeBps / 100}%</p>
+            <a
+              href={explorerAddressUrl(job.mint)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-muted transition hover:text-primary"
+              title="Token mint used to settle this job"
+            >
+              mint {job.mint.slice(0, 6)}…{job.mint.slice(-6)}
+              <ExternalLink className="h-2.5 w-2.5" />
+            </a>
           </div>
           <div className="space-y-1 font-mono text-xs">
             <p>
@@ -215,7 +255,13 @@ export function JobPage() {
             </p>
             <p>
               <span className="text-muted">freelancer </span>
-              {job.freelancer.slice(0, 6)}...{job.freelancer.slice(-6)}
+              <a
+                href={`/profile/${job.freelancer}`}
+                className="underline decoration-dotted transition hover:text-primary"
+                title="Public escrow track record"
+              >
+                {job.freelancer.slice(0, 6)}...{job.freelancer.slice(-6)}
+              </a>
               {isFreelancer && <span className="ml-1 text-primary">(you)</span>}
             </p>
             <p>
@@ -231,11 +277,86 @@ export function JobPage() {
             {countdown && (
               <p className="flex items-center gap-1 text-accent-gold">
                 <Clock className="h-3.5 w-3.5" />
-                review window: {countdown === "elapsed" ? "elapsed — freelancer can claim" : `${countdown} left`}
+                review window:{" "}
+                {countdown === "elapsed"
+                  ? "elapsed — freelancer can claim"
+                  : `${countdown} left`}
               </p>
             )}
           </div>
         </div>
+
+        {/* Cierre del ciclo: qué queda del acuerdo una vez liquidado */}
+        {TERMINAL_STATES.has(job.state) && (
+          <div className="space-y-3 rounded-2xl border border-green-400/25 bg-green-400/[0.06] p-6">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-400" />
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-foreground">
+                  {job.state === JobState.Released
+                    ? "Payment released"
+                    : job.state === JobState.Resolved
+                      ? "Dispute resolved and funds split"
+                      : "Refunded to the client"}
+                </p>
+                <p className="text-sm text-muted">
+                  {job.state === JobState.Refunded
+                    ? "The full amount went back to the client with no fee. A cancelled agreement is not work history."
+                    : job.state === JobState.Resolved
+                      ? "An arbiter split the vault and the outcome is final on-chain. This is a transparent dispute outcome, not completed work: a dispute can be opened before any delivery, and the arbiter may award the freelancer nothing."
+                      : "The vault is empty and the outcome is final on-chain. A delivered and released job like this one is what a verifiable track record is built from."}
+                </p>
+              </div>
+            </div>
+
+            {job.state === JobState.Released && (
+              <div className="rounded-xl border border-border-low bg-background/40 p-4">
+                {isCheckingAttestation ? (
+                  <p className="flex items-center gap-2 text-xs text-muted">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Looking for the attestation…
+                  </p>
+                ) : attestation ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-green-400">
+                      Attested · Solana Attestation Service
+                    </p>
+                    <p className="text-xs text-muted">
+                      A credential signed by RepuLink records this outcome
+                      against the freelancer&apos;s wallet, in a registry
+                      RepuLink does not own.
+                    </p>
+                    <a
+                      href={explorerAddressUrl(attestation.address)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-mono text-[11px] text-primary-light underline"
+                    >
+                      {attestation.address.slice(0, 10)}…
+                      {attestation.address.slice(-10)}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <p className="text-[10px] text-muted/70">
+                      schema v{attestation.schemaVersion}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted">
+                      Not attested yet
+                    </p>
+                    <p className="text-xs text-muted">
+                      Attestations are issued by RepuLink after a job is
+                      released, and today that step is run manually. It is not
+                      part of the release transaction, so a released job may
+                      stay unattested.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Feedback */}
         {escrow.isBusy && (
@@ -284,7 +405,9 @@ export function JobPage() {
                 />
                 <button
                   disabled={escrow.isBusy || !deliveryRef.trim()}
-                  onClick={() => run(() => escrow.markDelivered(jobAddress, deliveryRef))}
+                  onClick={() =>
+                    run(() => escrow.markDelivered(jobAddress, deliveryRef))
+                  }
                   className={`${btn} w-full bg-brand-gradient text-white hover:opacity-90`}
                 >
                   <PackageCheck className="h-4 w-4" /> Deliver work
@@ -309,22 +432,30 @@ export function JobPage() {
                 disabled={escrow.isBusy || countdown !== "elapsed"}
                 onClick={() => run(() => escrow.claimTimeout(jobAddress))}
                 className={`${btn} w-full glass-panel glass-panel-hover`}
-                title={countdown !== "elapsed" ? "Available when the review window elapses" : undefined}
+                title={
+                  countdown !== "elapsed"
+                    ? "Available when the review window elapses"
+                    : undefined
+                }
               >
-                <Clock className="h-4 w-4" /> Claim payout (review window elapsed)
+                <Clock className="h-4 w-4" /> Claim payout (review window
+                elapsed)
               </button>
             )}
 
             {/* Client: fondear un job Created huérfano / cancelar */}
             {isClient &&
-              (job.state === JobState.Created || job.state === JobState.Funded) && (
+              (job.state === JobState.Created ||
+                job.state === JobState.Funded) && (
                 <button
                   disabled={escrow.isBusy}
                   onClick={() => run(() => escrow.cancelRefund(jobAddress))}
                   className={`${btn} w-full glass-panel glass-panel-hover text-muted hover:text-foreground`}
                 >
                   <Undo2 className="h-4 w-4" />
-                  {job.state === JobState.Funded ? "Cancel & refund" : "Cancel job"}
+                  {job.state === JobState.Funded
+                    ? "Cancel & refund"
+                    : "Cancel job"}
                 </button>
               )}
 
@@ -346,8 +477,8 @@ export function JobPage() {
                   <Gavel className="h-4 w-4 text-accent-gold" /> Resolve dispute
                 </p>
                 <p className="text-xs text-muted">
-                  Amount for the freelancer (0 – {formatUsdc(job.amount)} USDC); the
-                  remainder returns to the client.
+                  Amount for the freelancer (0 – {formatUsdc(job.amount)}{" "}
+                  {tokenLabel(job.mint)}); the remainder returns to the client.
                 </p>
                 <input
                   value={freelancerAmount}
@@ -362,8 +493,8 @@ export function JobPage() {
                     run(() =>
                       escrow.resolveDispute(
                         jobAddress,
-                        usdcToBaseUnits(freelancerAmount),
-                      ),
+                        usdcToBaseUnits(freelancerAmount)
+                      )
                     )
                   }
                   className={`${btn} w-full bg-brand-gradient text-white hover:opacity-90`}
