@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Lock, ShieldCheck, Unlock } from "lucide-react";
+import { PartyAvatar } from "../brand/PartyAvatar";
 
 /**
  * El movimiento real del dinero, animado.
@@ -58,20 +59,54 @@ export function EscrowFlow() {
                 ? {}
                 : {
                     boxShadow: locked
-                      ? "0 0 0 1px rgba(59,130,246,0.35), 0 0 42px -6px rgba(59,130,246,0.5)"
+                      ? "0 0 0 1px rgba(59,130,246,0.4), 0 0 60px -8px rgba(59,130,246,0.55)"
                       : released
-                        ? "0 0 0 1px rgba(52,211,153,0.4), 0 0 48px -4px rgba(52,211,153,0.55)"
+                        ? "0 0 0 1px rgba(52,211,153,0.45), 0 0 64px -6px rgba(52,211,153,0.6)"
                         : "0 0 0 1px rgba(255,255,255,0.08), 0 0 0 rgba(0,0,0,0)",
                   }
             }
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-border-low bg-background sm:h-36 sm:w-36 sm:rounded-[1.4rem]"
+            className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-border-low bg-background sm:h-36 sm:w-36 sm:rounded-[1.4rem]"
           >
+            {/* Nivel del vault: sube al fondear, baja al liberar */}
+            <motion.div
+              className="absolute inset-x-0 bottom-0"
+              animate={{ height: funded && !released ? "100%" : "0%" }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(59,130,246,0.28), rgba(59,130,246,0.04))",
+              }}
+            />
+            {/* Rejilla fina: le da materia en vez de plano */}
+            <div
+              className="absolute inset-0 opacity-[0.18]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px)",
+                backgroundSize: "14px 14px",
+              }}
+            />
+            {/* Barrido al liberar: el momento de mayor impacto */}
+            {released && !reduced && (
+              <motion.div
+                className="absolute inset-0"
+                initial={{ x: "-120%" }}
+                animate={{ x: "120%" }}
+                transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent, rgba(52,211,153,0.5), transparent)",
+                }}
+              />
+            )}
+
             <motion.div
               key={released ? "open" : locked ? "shut" : "idle"}
               initial={reduced ? false : { scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.35, ease: [0.34, 1.4, 0.64, 1] }}
+              className="relative z-10"
             >
               {released ? (
                 <Unlock className="h-7 w-7 text-state-done sm:h-9 sm:w-9" />
@@ -81,19 +116,16 @@ export function EscrowFlow() {
                 <Lock className="h-7 w-7 text-muted/40 sm:h-9 sm:w-9" />
               )}
             </motion.div>
-
-            {/* El importe, dentro mientras está retenido */}
-            <motion.span
-              animate={{
-                opacity: locked ? 1 : 0,
-                y: locked ? 0 : 6,
-              }}
-              transition={{ duration: 0.4 }}
-              className="absolute -bottom-8 whitespace-nowrap font-mono text-sm font-medium text-state-funded tabular"
-            >
-              100.00 <span className="text-[10px] text-muted">in escrow</span>
-            </motion.span>
           </motion.div>
+
+          {/* El importe vive fuera del vault: dentro lo recortaba el overflow */}
+          <motion.span
+            animate={{ opacity: locked ? 1 : 0, y: locked ? 0 : 6 }}
+            transition={{ duration: 0.4 }}
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-sm font-medium text-state-funded tabular"
+          >
+            100.00 <span className="text-[10px] text-muted">in escrow</span>
+          </motion.span>
 
           {/* Sello de atestación */}
           <motion.div
@@ -174,21 +206,12 @@ export function EscrowFlow() {
 function Party({ label, active }: { label: string; active: boolean }) {
   return (
     <div className="flex min-w-0 shrink-0 flex-col items-center gap-2.5">
-      <motion.div
-        animate={{
-          borderColor: active
-            ? "rgba(153,69,255,0.5)"
-            : "rgba(255,255,255,0.06)",
-          scale: active ? 1.05 : 1,
-        }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="flex h-11 w-11 items-center justify-center rounded-xl border bg-elev-1 sm:h-16 sm:w-16"
+      <PartyAvatar seed={label} size={64} active={active} />
+      <span
+        className={`text-[9px] font-semibold uppercase tracking-wider transition-colors duration-[--dur-fast] sm:text-[10px] sm:tracking-widest ${
+          active ? "text-white" : "text-muted"
+        }`}
       >
-        <span className="font-heading text-base font-black text-white/80">
-          {label[0]}
-        </span>
-      </motion.div>
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted sm:text-[10px] sm:tracking-widest">
         {label}
       </span>
     </div>

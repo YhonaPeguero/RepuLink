@@ -1,6 +1,7 @@
 import { useWalletConnection } from "@solana/react-hooks";
 import { motion } from "framer-motion";
 import { Check, Download } from "lucide-react";
+import { WALLET_MARKS } from "./WalletMarks";
 
 /**
  * Compatibilidad de wallets, dicha con precisión.
@@ -15,9 +16,9 @@ import { Check, Download } from "lucide-react";
  * color de marca, sin dibujar un logotipo de memoria.
  */
 const KNOWN = [
-  { name: "Phantom", url: "https://phantom.app/", tint: "#AB9FF2" },
-  { name: "Solflare", url: "https://solflare.com/", tint: "#FC7227" },
-  { name: "Backpack", url: "https://backpack.app/", tint: "#E33E3F" },
+  { name: "Phantom", url: "https://phantom.app/" },
+  { name: "Solflare", url: "https://solflare.com/" },
+  { name: "Backpack", url: "https://backpack.app/" },
 ] as const;
 
 export function WalletStrip({ compact = false }: { compact?: boolean }) {
@@ -25,6 +26,7 @@ export function WalletStrip({ compact = false }: { compact?: boolean }) {
 
   const rows = KNOWN.map((w) => ({
     ...w,
+    Mark: WALLET_MARKS[w.name],
     connector: connectors.find((c) =>
       c.name.toLowerCase().includes(w.name.toLowerCase())
     ),
@@ -40,7 +42,7 @@ export function WalletStrip({ compact = false }: { compact?: boolean }) {
   return (
     <div className={compact ? "" : "space-y-3"}>
       <div className="flex flex-wrap items-center gap-2">
-        {rows.map(({ name, url, tint, connector }, i) => (
+        {rows.map(({ name, url, connector, Mark }, i) => (
           <motion.div
             key={name}
             initial={{ opacity: 0, y: 8 }}
@@ -68,12 +70,7 @@ export function WalletStrip({ compact = false }: { compact?: boolean }) {
                 rel="noreferrer"
                 className="group flex items-center gap-2 rounded-xl border border-border-low bg-background/40 py-2 pl-2 pr-3.5 text-sm font-medium text-muted transition-all duration-[--dur-micro] hover:-translate-y-px hover:text-white"
               >
-                <span
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-black text-black/80 transition-transform duration-[--dur-micro] group-hover:scale-105"
-                  style={{ backgroundColor: tint }}
-                >
-                  {name[0]}
-                </span>
+                <Mark className="h-6 w-6 transition-transform duration-[--dur-micro] group-hover:scale-105" />
                 {name}
                 <Download className="h-3.5 w-3.5 opacity-50" />
               </a>
@@ -97,13 +94,6 @@ export function WalletStrip({ compact = false }: { compact?: boolean }) {
           </button>
         ))}
       </div>
-
-      {!compact && (
-        <p className="text-xs leading-relaxed text-muted/70">
-          Any Solana wallet that implements the Wallet Standard works. RepuLink
-          holds no keys and creates no account.
-        </p>
-      )}
     </div>
   );
 }

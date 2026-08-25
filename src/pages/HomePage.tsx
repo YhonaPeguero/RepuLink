@@ -12,7 +12,7 @@ import { EscrowFlow } from "../components/marketing/EscrowFlow";
 import {
   CountUp,
   Magnetic,
-  Marquee,
+  DragRail,
   Reveal,
 } from "../components/marketing/motion-primitives";
 import { SolanaBars, SolanaMark } from "../components/brand/SolanaMark";
@@ -20,8 +20,6 @@ import { WalletStrip } from "../components/brand/WalletStrip";
 import { LifecycleRail } from "../components/job/LifecycleRail";
 import { JobState } from "../generated/repulink/types/jobState";
 import { DEMO_JOBS } from "../lib/demo-jobs";
-
-const PROGRAM_ID = "2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1";
 
 const stagger: Variants = {
   hidden: {},
@@ -43,14 +41,22 @@ const rise: Variants = {
  * evita el "para cualquier cosa" que no significa nada.
  */
 const USE_CASES = [
-  "Freelance projects",
-  "Contractor milestones",
-  "Creator commissions",
-  "DAO contributions",
-  "Service retainers",
-  "Design sprints",
-  "Audit engagements",
-  "Team bounties",
+  { label: "Freelance projects", tint: "#9945FF", ring: "border-primary/25" },
+  {
+    label: "Contractor milestones",
+    tint: "#3B82F6",
+    ring: "border-state-funded/25",
+  },
+  { label: "Creator commissions", tint: "#F472B6", ring: "border-pink-400/25" },
+  { label: "DAO contributions", tint: "#14F195", ring: "border-state-done/25" },
+  {
+    label: "Service retainers",
+    tint: "#FBBF24",
+    ring: "border-state-active/25",
+  },
+  { label: "Design sprints", tint: "#A78BFA", ring: "border-primary/25" },
+  { label: "Audit engagements", tint: "#38BDF8", ring: "border-sky-400/25" },
+  { label: "Team bounties", tint: "#FB923C", ring: "border-orange-400/25" },
 ];
 
 const GUARANTEES = [
@@ -98,8 +104,6 @@ export function HomePage() {
           >
             <SolanaMark className="h-2.5 w-auto" />
             Built on Solana
-            <span className="h-3 w-px bg-border-strong" />
-            <span className="text-state-done">Devnet live</span>
           </motion.span>
 
           <motion.h1
@@ -115,9 +119,7 @@ export function HomePage() {
             variants={rise}
             className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
           >
-            Escrow and on-chain attestations for agreements between two parties.
-            The money is locked before the work starts, and the outcome becomes
-            a credential the wallet keeps.
+            Lock the money before the work starts. Keep the proof after.
           </motion.p>
 
           <motion.div
@@ -164,9 +166,9 @@ export function HomePage() {
             )}
           </motion.div>
 
-          <motion.div variants={rise} className="mt-8">
+          <motion.div variants={rise} className="mt-10">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted/60">
-              Works with
+              Sign in with your Solana wallet
             </p>
             <WalletStrip />
           </motion.div>
@@ -183,27 +185,31 @@ export function HomePage() {
       </motion.section>
 
       {/* ── Alcance ─────────────────────────────────────────────────── */}
-      <Reveal className="mt-20">
-        <div className="mb-4 flex items-center gap-3">
-          <SolanaBars className="h-2.5 w-auto text-primary/50" />
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-            Freelance work is where we started. The escrow does not care.
+      <Reveal className="mt-24">
+        <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <SolanaBars className="h-2.5 w-auto text-primary/60" />
+          <p className="text-sm font-semibold text-white">
+            Freelance work is where we started.
           </p>
         </div>
-        <Marquee duration={46}>
-          {USE_CASES.map((c) => (
+        <DragRail>
+          {USE_CASES.map(({ label, tint, ring }) => (
             <span
-              key={c}
-              className="whitespace-nowrap rounded-full border border-border-low bg-elev-1/60 px-5 py-2.5 text-sm font-medium text-white/80 backdrop-blur-sm"
+              key={label}
+              className={`flex shrink-0 select-none items-center gap-2.5 whitespace-nowrap rounded-full border ${ring} bg-elev-1/70 py-2.5 pl-3 pr-5 text-sm font-medium text-white/90 backdrop-blur-sm transition-colors duration-[--dur-fast] hover:bg-elev-2`}
             >
-              {c}
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: tint }}
+              />
+              {label}
             </span>
           ))}
-        </Marquee>
+        </DragRail>
       </Reveal>
 
       {/* ── Cómo funciona ───────────────────────────────────────────── */}
-      <Reveal className="mt-20">
+      <Reveal className="mt-24">
         <div className="overflow-hidden rounded-3xl border border-border-low bg-elev-1/60 backdrop-blur-sm">
           <div className="grid gap-px bg-border-low lg:grid-cols-[1.15fr_1fr]">
             <div className="flex flex-col bg-background/80 p-8 sm:p-10">
@@ -256,7 +262,7 @@ export function HomePage() {
       </Reveal>
 
       {/* ── Cifras ──────────────────────────────────────────────────── */}
-      <Reveal className="mt-20">
+      <Reveal className="mt-24">
         <div className="grid gap-px overflow-hidden rounded-2xl border border-border-low bg-border-low sm:grid-cols-3">
           {[
             {
@@ -294,7 +300,7 @@ export function HomePage() {
       </Reveal>
 
       {/* ── En vivo ─────────────────────────────────────────────────── */}
-      <Reveal className="mt-20">
+      <Reveal className="mt-24">
         <div className="mb-5 flex items-baseline justify-between gap-4">
           <h2 className="font-heading text-xl font-bold text-white">
             Running on devnet right now
@@ -333,57 +339,6 @@ export function HomePage() {
               </span>
             </a>
           ))}
-        </div>
-      </Reveal>
-
-      {/* ── Ecosistema ──────────────────────────────────────────────── */}
-      <Reveal className="mt-20">
-        <div className="relative overflow-hidden rounded-3xl border border-border-low bg-elev-1/60 p-8 backdrop-blur-sm sm:p-10">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/10 blur-[90px]" />
-          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
-            <div className="max-w-md">
-              <SolanaMark className="h-5 w-auto" />
-              <p className="mt-5 font-heading text-xl font-bold leading-snug text-white">
-                An Anchor program, a token vault and an attestation registry.
-                Nothing else in between.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-muted">
-                No backend, no database, no indexer. The app reads the chain
-                directly, so the record survives us.
-              </p>
-            </div>
-
-            <dl className="grid shrink-0 gap-px overflow-hidden rounded-2xl border border-border-low bg-border-low sm:grid-cols-2">
-              {[
-                {
-                  k: "Program",
-                  v: PROGRAM_ID,
-                  href: `https://explorer.solana.com/address/${PROGRAM_ID}?cluster=devnet`,
-                },
-                {
-                  k: "Attestations",
-                  v: "Solana Attestation Service",
-                  href: "https://attest.solana.com",
-                },
-              ].map(({ k, v, href }) => (
-                <a
-                  key={k}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group bg-background/80 px-5 py-4 transition-colors hover:bg-elev-1"
-                >
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-                    {k}
-                  </dt>
-                  <dd className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-white">
-                    {v.length > 24 ? `${v.slice(0, 6)}…${v.slice(-6)}` : v}
-                    <ArrowUpRight className="h-3 w-3 text-muted transition-transform duration-[--dur-micro] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary-light" />
-                  </dd>
-                </a>
-              ))}
-            </dl>
-          </div>
         </div>
       </Reveal>
 

@@ -22,6 +22,7 @@ import { useEscrow } from "../hooks/useEscrow";
 import { formatUsdc } from "../lib/usdc";
 import { STATE_META, TERMINAL_STATES } from "../lib/job-state";
 import { LifecycleRail } from "../components/job/LifecycleRail";
+import { PartyAvatar } from "../components/brand/PartyAvatar";
 import {
   findJobAttestation,
   explorerAddressUrl,
@@ -300,9 +301,10 @@ export function JobPage() {
             ].map(({ role, addr, you, href }) => (
               <div
                 key={role}
-                className="flex items-baseline justify-between gap-3"
+                className="flex items-center justify-between gap-3"
               >
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted">
+                  <PartyAvatar seed={addr} size={22} />
                   {role}
                 </span>
                 <span className="flex items-center gap-1.5">

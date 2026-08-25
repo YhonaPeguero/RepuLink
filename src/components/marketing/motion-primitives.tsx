@@ -147,38 +147,144 @@ export function Magnetic({
 }
 
 /**
- * Cinta horizontal en bucle. Duplica el contenido para que el bucle no tenga
- * costura, y se detiene con movimiento reducido.
+ * Carril horizontal desplazable.
+ *
+ * Antes era una cinta que solo se miraba: no se podía arrastrar ni llegar a los
+ * extremos. Ahora es scroll real (rueda, arrastre y teclado), con deriva
+ * automática que se detiene en cuanto el usuario interactúa.
  */
-export function Marquee({
+export function DragRail({
   children,
-  duration = 38,
+  className = "",
 }: {
   children: ReactNode;
-  duration?: number;
+  className?: string;
 }) {
   const reduced = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  // Deriva lenta: da vida sin secuestrar el scroll. Se para al interactuar.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || reduced || paused) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (t: number) => {
+      const dt = t - last;
+      last = t;
+      if (el.scrollWidth - el.clientWidth > 4) {
+        el.scrollLeft += dt * 0.022;
+        if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 1)
+          el.scrollLeft = 0;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [reduced, paused]);
+
+  const sync = () => {
+    const el = ref.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft < 4);
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
+  };
+
+  const nudge = (dir: -1 | 1) => {
+    setPaused(true);
+    ref.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
+  };
+
+  // Arrastre con puntero, con handlers estables para poder limpiarlos.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let down = false;
+    let startX = 0;
+    let startLeft = 0;
+    const onDown = (e: PointerEvent) => {
+      down = true;
+      startX = e.clientX;
+      startLeft = el.scrollLeft;
+      setPaused(true);
+      el.setPointerCapture(e.pointerId);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!down) return;
+      el.scrollLeft = startLeft - (e.clientX - startX);
+    };
+    const onUp = (e: PointerEvent) => {
+      down = false;
+      el.releasePointerCapture?.(e.pointerId);
+    };
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
   return (
-    <div className="relative flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
+    <div
+      className={`group/rail relative ${className}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div
-        className="flex shrink-0 gap-3 pr-3"
-        style={
-          reduced
-            ? undefined
-            : { animation: `marquee ${duration}s linear infinite` }
-        }
+        ref={ref}
+        onScroll={sync}
+        tabIndex={0}
+        role="region"
+        aria-label="Use cases"
+        className="flex cursor-grab gap-3 overflow-x-auto scroll-smooth pb-1 active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
-      {!reduced && (
-        <div
-          className="flex shrink-0 gap-3 pr-3"
-          style={{ animation: `marquee ${duration}s linear infinite` }}
-          aria-hidden
-        >
-          {children}
-        </div>
-      )}
+
+      <RailButton side="left" onClick={() => nudge(-1)} hidden={atStart} />
+      <RailButton side="right" onClick={() => nudge(1)} hidden={atEnd} />
     </div>
+  );
+}
+
+function RailButton({
+  side,
+  onClick,
+  hidden,
+}: {
+  side: "left" | "right";
+  onClick: () => void;
+  hidden: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={side === "left" ? "Scroll left" : "Scroll right"}
+      className={`absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border-low bg-background/90 text-muted backdrop-blur transition-all duration-[--dur-fast] hover:border-primary/40 hover:text-white ${
+        side === "left" ? "-left-2" : "-right-2"
+      } ${hidden ? "pointer-events-none opacity-0" : "opacity-0 group-hover/rail:opacity-100"}`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path
+          d={side === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }
