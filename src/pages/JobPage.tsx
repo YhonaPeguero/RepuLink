@@ -21,6 +21,7 @@ import { JobState } from "../generated/repulink/types/jobState";
 import { useEscrow } from "../hooks/useEscrow";
 import { formatUsdc } from "../lib/usdc";
 import { STATE_META, TERMINAL_STATES } from "../lib/job-state";
+import { LifecycleRail } from "../components/job/LifecycleRail";
 import {
   findJobAttestation,
   explorerAddressUrl,
@@ -37,9 +38,15 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 function ts(seconds: bigint): string {
-  return seconds === 0n
-    ? "—"
-    : new Date(Number(seconds) * 1000).toLocaleString();
+  if (seconds === 0n) return "—";
+  // Compacto a propósito: en la columna de tiempo las tres marcas suelen caer
+  // el mismo día, y repetir la fecha completa tres veces es ruido.
+  return new Date(Number(seconds) * 1000).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function useCountdown(deadlineSecs: number | null): string | null {
@@ -166,11 +173,21 @@ export function JobPage() {
     );
   }
 
+  // Esqueleto con la forma real de la página: al llegar los datos nada salta
+  // de sitio, que es lo que hace que una carga se perciba lenta.
   if (isLoading && !job) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="mx-auto max-w-4xl space-y-5" aria-busy="true">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <div className="shimmer-skeleton h-2.5 w-20 rounded" />
+              <div className="shimmer-skeleton h-4 w-56 rounded" />
+            </div>
+            <div className="shimmer-skeleton h-6 w-24 rounded-full" />
+          </div>
+          <div className="shimmer-skeleton h-[104px] rounded-2xl" />
+          <div className="shimmer-skeleton h-[176px] rounded-2xl" />
         </div>
       </Layout>
     );
@@ -191,100 +208,159 @@ export function JobPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-2xl space-y-6 py-12"
+        className="mx-auto max-w-4xl space-y-5"
       >
         {/* Cabecera */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-heading text-2xl font-bold">Escrow job</h1>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
+              Agreement
+            </p>
             <a
               href={`https://explorer.solana.com/address/${jobAddress}?cluster=devnet`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-xs text-muted transition hover:text-primary"
+              className="mt-1 inline-flex items-center gap-1.5 font-mono text-sm text-white transition-colors duration-[--dur-micro] hover:text-primary-light"
             >
-              {jobAddress.slice(0, 8)}...{jobAddress.slice(-8)}
-              <ExternalLink className="h-3 w-3" />
+              {jobAddress.slice(0, 10)}…{jobAddress.slice(-10)}
+              <ExternalLink className="h-3 w-3 opacity-60" />
             </a>
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`rounded-full border bg-background/60 px-3 py-1 text-xs font-bold uppercase tracking-wider ${meta.className}`}
+              className={`rounded-full border bg-background/60 px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${meta.className}`}
             >
               {meta.label}
             </span>
             <button
               onClick={refetch}
               title="Refresh"
-              className="rounded-xl p-2 text-muted transition hover:text-foreground"
+              aria-label="Refresh job"
+              className="rounded-lg p-2 text-muted transition-colors duration-[--dur-micro] hover:text-foreground"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
               />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Datos */}
-        <div className="glass-panel grid grid-cols-1 gap-4 rounded-2xl p-6 sm:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted">
-              Amount
+        {/* Dónde está este acuerdo — la firma del producto */}
+        <section className="rounded-2xl border border-border-low bg-elev-1 px-6 py-7 sm:px-8">
+          <LifecycleRail state={job.state} />
+        </section>
+
+        {/* El dinero, primero */}
+        <section className="grid gap-px overflow-hidden rounded-2xl border border-border-low bg-border-low sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_1fr]">
+          <div className="bg-background p-6 sm:p-7">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
+              In escrow
             </p>
-            <p className="text-xl font-bold">
-              {formatUsdc(job.amount)}{" "}
-              <span className="text-sm text-muted">{tokenLabel(job.mint)}</span>
+            <p className="mt-2 font-heading text-4xl font-black tracking-tight text-white tabular">
+              {formatUsdc(job.amount)}
+              <span className="ml-2 align-middle text-sm font-medium text-muted">
+                {tokenLabel(job.mint)}
+              </span>
             </p>
-            <p className="text-xs text-muted">fee {job.feeBps / 100}%</p>
-            <a
-              href={explorerAddressUrl(job.mint)}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-muted transition hover:text-primary"
-              title="Token mint used to settle this job"
-            >
-              mint {job.mint.slice(0, 6)}…{job.mint.slice(-6)}
-              <ExternalLink className="h-2.5 w-2.5" />
-            </a>
-          </div>
-          <div className="space-y-1 font-mono text-xs">
-            <p>
-              <span className="text-muted">client </span>
-              {job.client.slice(0, 6)}...{job.client.slice(-6)}
-              {isClient && <span className="ml-1 text-primary">(you)</span>}
-            </p>
-            <p>
-              <span className="text-muted">freelancer </span>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+              <span>
+                fee{" "}
+                <span className="text-foreground tabular">
+                  {job.feeBps / 100}%
+                </span>
+              </span>
               <a
-                href={`/profile/${job.freelancer}`}
-                className="underline decoration-dotted transition hover:text-primary"
-                title="Public escrow track record"
+                href={explorerAddressUrl(job.mint)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-mono transition-colors duration-[--dur-micro] hover:text-primary-light"
+                title="Token mint used to settle this job"
               >
-                {job.freelancer.slice(0, 6)}...{job.freelancer.slice(-6)}
+                mint {job.mint.slice(0, 4)}…{job.mint.slice(-4)}
+                <ExternalLink className="h-2.5 w-2.5" />
               </a>
-              {isFreelancer && <span className="ml-1 text-primary">(you)</span>}
-            </p>
-            <p>
-              <span className="text-muted">arbiter </span>
-              {job.arbiter.slice(0, 6)}...{job.arbiter.slice(-6)}
-              {isArbiter && <span className="ml-1 text-primary">(you)</span>}
-            </p>
+            </div>
           </div>
-          <div className="space-y-1 text-xs text-muted sm:col-span-2">
-            <p>created {ts(job.createdAt)}</p>
-            <p>funded {ts(job.fundedAt)}</p>
-            <p>delivered {ts(job.deliveredAt)}</p>
+
+          <div className="space-y-3 bg-background p-6 sm:p-7">
+            {[
+              { role: "Client", addr: job.client, you: isClient, href: null },
+              {
+                role: "Freelancer",
+                addr: job.freelancer,
+                you: isFreelancer,
+                href: `/profile/${job.freelancer}`,
+              },
+              {
+                role: "Arbiter",
+                addr: job.arbiter,
+                you: isArbiter,
+                href: null,
+              },
+            ].map(({ role, addr, you, href }) => (
+              <div
+                key={role}
+                className="flex items-baseline justify-between gap-3"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                  {role}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {href ? (
+                    <a
+                      href={href}
+                      className="font-mono text-xs text-foreground underline decoration-dotted underline-offset-2 transition-colors duration-[--dur-micro] hover:text-primary-light"
+                      title="Public escrow track record"
+                    >
+                      {addr.slice(0, 4)}…{addr.slice(-4)}
+                    </a>
+                  ) : (
+                    <span className="font-mono text-xs text-foreground">
+                      {addr.slice(0, 4)}…{addr.slice(-4)}
+                    </span>
+                  )}
+                  {you && (
+                    <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-light">
+                      you
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-background p-6 sm:p-7">
+            <ol className="space-y-2.5">
+              {[
+                { label: "Created", at: job.createdAt },
+                { label: "Funded", at: job.fundedAt },
+                { label: "Delivered", at: job.deliveredAt },
+              ].map(({ label, at }) => (
+                <li
+                  key={label}
+                  className={`flex items-baseline justify-between gap-3 ${
+                    at === 0n ? "opacity-35" : ""
+                  }`}
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                    {label}
+                  </span>
+                  <span className="font-mono text-[11px] text-foreground tabular">
+                    {ts(at)}
+                  </span>
+                </li>
+              ))}
+            </ol>
             {countdown && (
-              <p className="flex items-center gap-1 text-accent-gold">
-                <Clock className="h-3.5 w-3.5" />
-                review window:{" "}
+              <p className="mt-4 flex items-start gap-1.5 border-t border-border-low pt-4 text-[11px] leading-snug text-state-active">
+                <Clock className="mt-px h-3 w-3 shrink-0" />
                 {countdown === "elapsed"
-                  ? "elapsed — freelancer can claim"
-                  : `${countdown} left`}
+                  ? "Review window elapsed. The freelancer can claim the payout"
+                  : `Review window: ${countdown} left`}
               </p>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Cierre del ciclo: qué queda del acuerdo una vez liquidado */}
         {TERMINAL_STATES.has(job.state) && (
@@ -304,7 +380,7 @@ export function JobPage() {
                     ? "The full amount went back to the client with no fee. A cancelled agreement is not work history."
                     : job.state === JobState.Resolved
                       ? "An arbiter split the vault and the outcome is final on-chain. This is a transparent dispute outcome, not completed work: a dispute can be opened before any delivery, and the arbiter may award the freelancer nothing."
-                      : "The vault is empty and the outcome is final on-chain. A delivered and released job like this one is what a verifiable track record is built from."}
+                      : "The vault is empty and the outcome is final on-chain. A delivered and released agreement like this one is what a verifiable track record is built from."}
                 </p>
               </div>
             </div>
@@ -388,8 +464,8 @@ export function JobPage() {
 
         {/* Acciones por rol y estado */}
         {!escrow.isConnected ? (
-          <p className="text-center text-sm text-muted">
-            Connect your wallet to act on this job.
+          <p className="rounded-2xl border border-dashed border-border-low px-6 py-8 text-center text-sm text-muted">
+            Connect your wallet to act on this agreement.
           </p>
         ) : (
           <div className="space-y-4">
@@ -400,7 +476,7 @@ export function JobPage() {
                 <input
                   value={deliveryRef}
                   onChange={(e) => setDeliveryRef(e.target.value)}
-                  placeholder="Delivery reference (URL or description) — hashed on-chain"
+                  placeholder="Delivery reference (URL or description), hashed on-chain"
                   className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition focus:border-primary/50"
                 />
                 <button

@@ -19,7 +19,7 @@ export const DEMO_JOBS: readonly DemoJob[] = [
   {
     address: "GEuRR4qYY6HmH1XK4DMH4eza4KKnawLdpCrWBV9aVfbC",
     label: "Delivered",
-    note: "250 delivered, review window elapsed — freelancer can claim",
+    note: "250 delivered, review window elapsed. The worker can claim",
   },
   {
     address: "Diqr5i19MsKPiYYqydZtqyEfhiWusfMdTMJK8UPNj4kF",

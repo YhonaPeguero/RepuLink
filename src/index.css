@@ -40,7 +40,34 @@
 
   --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ── Colores de ESTADO del ciclo de vida ───────────────────────────────
+     El morado es la marca, no un estado. Antes hacía de las dos cosas, así
+     que un job no se leía de un vistazo. Cada estado del escrow tiene ahora
+     su propio color y siempre significa lo mismo en toda la app. */
+  --state-idle: #a1a1aa; /* Created — todavía no hay dinero */
+  --state-funded: #3b82f6; /* Funded — el dinero está en el vault */
+  --state-active: #fbbf24; /* Delivered — la pelota está en tu tejado */
+  --state-done: #34d399; /* Released / Resolved — liquidado */
+  --state-alert: #f87171; /* Disputed */
+
+  /* ── Elevación ────────────────────────────────────────────────────────
+     Tres niveles reales. Antes todo el glass era el mismo valor, así que
+     nada parecía estar por encima de nada. */
+  --elev-1: rgba(255, 255, 255, 0.024);
+  --elev-2: rgba(255, 255, 255, 0.045);
+  --elev-3: rgba(255, 255, 255, 0.07);
+  --edge-highlight: rgba(255, 255, 255, 0.08);
+
+  /* ── Motion ───────────────────────────────────────────────────────────
+     Duraciones y curvas fijas para que el movimiento se sienta de un mismo
+     sistema. Micro-feedback rápido, entradas algo más lentas. */
+  --dur-micro: 150ms;
+  --dur-fast: 220ms;
+  --dur-base: 380ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 @theme inline {
@@ -68,6 +95,15 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 
+  --color-state-idle: var(--state-idle);
+  --color-state-funded: var(--state-funded);
+  --color-state-active: var(--state-active);
+  --color-state-done: var(--state-done);
+  --color-state-alert: var(--state-alert);
+  --color-elev-1: var(--elev-1);
+  --color-elev-2: var(--elev-2);
+  --color-elev-3: var(--elev-3);
+
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
@@ -77,6 +113,20 @@
 @layer base {
   * {
     @apply border-border outline-transparent;
+  }
+
+  /* Foco visible y consistente. `outline-transparent` global lo dejaba
+     invisible, lo que rompe la navegación por teclado. */
+  :focus-visible {
+    outline: 2px solid var(--accent-light);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Cifras alineadas en columnas: los importes dejan de bailar. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 
   body {
@@ -157,6 +207,52 @@
     animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  /* Aurora ambiental del fondo. Dos manchas que derivan muy despacio; solo
+     transform y opacity, así que va en el compositor y no cuesta CPU. */
+  .aurora {
+    position: fixed;
+    inset: -20%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(90px);
+    opacity: 0.5;
+  }
+  .aurora::before,
+  .aurora::after {
+    content: "";
+    position: absolute;
+    width: 46vw;
+    height: 46vw;
+    border-radius: 9999px;
+    will-change: transform;
+  }
+  .aurora::before {
+    top: 4%;
+    left: 8%;
+    background: radial-gradient(
+      circle,
+      rgba(153, 69, 255, 0.5),
+      transparent 68%
+    );
+    animation: drift-a 26s ease-in-out infinite alternate;
+  }
+  .aurora::after {
+    top: 22%;
+    right: 4%;
+    background: radial-gradient(
+      circle,
+      rgba(59, 130, 246, 0.42),
+      transparent 68%
+    );
+    animation: drift-b 32s ease-in-out infinite alternate;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aurora::before,
+    .aurora::after {
+      animation: none;
+    }
+  }
+
   /* Animated blockchain grid background for Layout */
   .bg-grid-pattern {
     background-image:
@@ -190,5 +286,32 @@
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6vw, 8vh, 0) scale(1.15);
+  }
+}
+
+@keyframes drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-7vw, 5vh, 0) scale(1);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
   }
 }

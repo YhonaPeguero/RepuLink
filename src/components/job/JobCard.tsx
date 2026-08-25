@@ -3,6 +3,7 @@ import { ArrowRight, Briefcase, UserRound } from "lucide-react";
 import { type MyJob } from "../../hooks/useMyJobs";
 import { formatUsdc } from "../../lib/usdc";
 import { STATE_META } from "../../lib/job-state";
+import { LifecycleDots } from "./LifecycleRail";
 import { tokenLabel } from "../../lib/tokens";
 
 /** Tarjeta de un Job en el listado. El rol se muestra siempre: en un escrow
@@ -16,20 +17,21 @@ export function JobCard({ job }: { job: MyJob }) {
       href={`/job/${job.address}`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group flex items-center justify-between gap-4 rounded-2xl glass-panel p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40"
+      className="group flex items-center justify-between gap-4 rounded-2xl border border-border-low bg-elev-1 p-5 transition-all duration-[--dur-fast] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-elev-2"
     >
       <div className="min-w-0 space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <LifecycleDots state={job.account.state} />
           <span
-            className={`rounded-full border bg-background/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.className}`}
+            className={`text-[10px] font-bold uppercase tracking-wider ${meta.className.split(" ")[0]}`}
           >
             {meta.label}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
-            <RoleIcon className="h-3 w-3" /> you are the {job.role}
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted/70">
+            <RoleIcon className="h-3 w-3" /> {job.role}
           </span>
         </div>
-        <p className="text-lg font-bold text-foreground">
+        <p className="text-xl font-bold text-foreground tabular">
           {formatUsdc(job.account.amount)}{" "}
           <span className="text-xs font-normal text-muted">
             {tokenLabel(job.account.mint)}

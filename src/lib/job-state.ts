@@ -42,3 +42,47 @@ export const TERMINAL_STATES: ReadonlySet<JobState> = new Set([
   JobState.Refunded,
   JobState.Resolved,
 ]);
+
+/** Un paso del camino feliz, tal y como lo dibuja el rail. */
+export type RailStep = {
+  key: string;
+  label: string;
+  state: JobState;
+};
+
+/** Camino feliz. El orden es el del programa: create → fund → deliver → release. */
+export const HAPPY_PATH: RailStep[] = [
+  { key: "created", label: "Created", state: JobState.Created },
+  { key: "funded", label: "Funded", state: JobState.Funded },
+  { key: "delivered", label: "Delivered", state: JobState.Delivered },
+  { key: "released", label: "Released", state: JobState.Released },
+];
+
+const HAPPY_ORDER: JobState[] = HAPPY_PATH.map((s) => s.state);
+
+/** Estados que no están en el rail: son salidas, no pasos. */
+export const DETOURS: Partial<
+  Record<JobState, { label: string; tone: string }>
+> = {
+  [JobState.Disputed]: { label: "Disputed", tone: "text-state-alert" },
+  [JobState.Resolved]: {
+    label: "Resolved by arbiter",
+    tone: "text-state-done",
+  },
+  [JobState.Refunded]: {
+    label: "Refunded to client",
+    tone: "text-state-idle",
+  },
+};
+
+/**
+ * Índice alcanzado en el camino feliz. Los estados de desvío se mapean al punto
+ * donde el job se salió del rail: `Refunded` solo puede venir de `Created` o
+ * `Funded`, y `Disputed`/`Resolved` como muy tarde de `Delivered`.
+ */
+export function reachedIndex(state: JobState): number {
+  const direct = HAPPY_ORDER.indexOf(state);
+  if (direct !== -1) return direct;
+  if (state === JobState.Refunded) return 1;
+  return 2;
+}

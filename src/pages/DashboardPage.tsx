@@ -20,7 +20,7 @@ export function DashboardPage() {
             <AlertCircle className="h-8 w-8 text-primary" />
           </div>
           <p className="text-lg text-muted">
-            Connect your wallet to see your escrow jobs.
+            Connect your wallet to see your agreements.
           </p>
           <a
             href="/"
@@ -45,17 +45,17 @@ export function DashboardPage() {
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div className="space-y-2">
             <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-              My jobs
+              My agreements
             </h1>
             <p className="text-base text-muted">
-              Every agreement where you are the client or the freelancer.
+              Every agreement where you are the payer or the worker.
             </p>
           </div>
 
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <a
               href={`/profile/${walletAddress}`}
-              className="flex items-center justify-center gap-1.5 rounded-xl glass-panel glass-panel-hover px-4 py-2.5 text-sm font-semibold transition"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-border-low bg-elev-1 px-4 py-2.5 text-sm font-semibold transition-all duration-[--dur-micro] hover:-translate-y-px hover:bg-elev-2"
             >
               <UserRound className="h-4 w-4" /> My public profile
             </a>
@@ -65,7 +65,7 @@ export function DashboardPage() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <Plus className="relative z-10 h-4 w-4" />
-              <span className="relative z-10">New escrow job</span>
+              <span className="relative z-10">New agreement</span>
             </a>
           </div>
         </div>
@@ -88,9 +88,12 @@ export function DashboardPage() {
 
         <section className="space-y-4">
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2" aria-busy="true">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-32 shimmer-skeleton rounded-2xl" />
+                <div
+                  key={i}
+                  className="shimmer-skeleton h-[124px] rounded-2xl"
+                />
               ))}
             </div>
           ) : jobs.length > 0 ? (
@@ -100,24 +103,24 @@ export function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-4 rounded-3xl glass-panel px-6 py-16 text-center">
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-low px-6 py-16 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5">
                 <Inbox className="h-6 w-6 text-muted" />
               </div>
               <div className="space-y-1">
                 <p className="text-base font-bold text-foreground">
-                  No jobs yet
+                  No agreements yet
                 </p>
                 <p className="max-w-sm text-sm text-muted">
-                  Create an escrow job and the payment is locked in a
+                  Start an agreement and the payment is locked in a
                   program-owned vault before any work starts.
                 </p>
               </div>
               <a
                 href="/job/create"
-                className="mt-2 flex items-center gap-2 rounded-xl bg-brand-gradient px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+                className="mt-2 flex items-center gap-2 rounded-xl bg-brand-gradient px-5 py-2.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
               >
-                <Plus className="h-4 w-4" /> Create your first job
+                <Plus className="h-4 w-4" /> Create your first agreement
               </a>
             </div>
           )}
@@ -128,7 +131,7 @@ export function DashboardPage() {
         <section className="space-y-4">
           <div className="space-y-1">
             <h2 className="text-lg font-bold text-foreground">
-              Devnet demo jobs
+              Public agreements on devnet
             </h2>
             <p className="text-sm text-muted">
               Five public jobs seeded on devnet, covering the key states of the
@@ -140,7 +143,7 @@ export function DashboardPage() {
               <a
                 key={demo.address}
                 href={`/job/${demo.address}`}
-                className="group flex flex-col gap-1 rounded-2xl border border-border-low bg-background/40 p-4 transition hover:border-primary/40"
+                className="group flex flex-col gap-1 rounded-xl border border-border-low bg-elev-1 p-4 transition-all duration-[--dur-fast] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-elev-2"
               >
                 <span className="text-sm font-bold text-foreground">
                   {demo.label}

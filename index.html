@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background-color: #08080a; color-scheme: dark">
   <head>
     <meta charset="UTF-8" />
     <title>RepuLink — Escrow and verifiable work history on Solana</title>
@@ -19,9 +19,38 @@
     />
     <meta property="og:image" content="/logo-repulink.png" />
     <meta name="twitter:card" content="summary" />
+    <style>
+      /* Crítico e inline a propósito: se aplica en el primer paint, antes de
+         que Vite inyecte la hoja de estilos. Evita el flash blanco al recargar
+         y al navegar en frío. */
+      html,
+      body {
+        margin: 0;
+        background-color: #08080a;
+        color: #fff;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Velo de arranque: se desvanece cuando React monta y añade .app-ready
+         al <html>. Evita el salto de layout sin contenido. */
+      #boot {
+        position: fixed;
+        inset: 0;
+        background: #08080a;
+        opacity: 1;
+        transition: opacity 260ms ease-out;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      html.app-ready #boot {
+        opacity: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -66,7 +66,7 @@ export function CreateJobPage() {
             <AlertCircle className="h-8 w-8 text-primary" />
           </div>
           <p className="text-lg text-muted">
-            Connect your wallet to create an escrow job.
+            Connect your wallet to create an agreement.
           </p>
         </div>
       </Layout>
@@ -85,16 +85,16 @@ export function CreateJobPage() {
             <Briefcase className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-bold">New escrow job</h1>
+            <h1 className="font-heading text-2xl font-bold">New agreement</h1>
             <p className="text-sm text-muted">
-              Funds are deposited in escrow the moment the job is created.
+              Funds are deposited in escrow the moment the agreement is created.
             </p>
           </div>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="glass-panel space-y-5 rounded-2xl p-6"
+          className="space-y-5 rounded-2xl border border-border-low bg-elev-1 p-6 sm:p-7"
         >
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-muted">
@@ -105,7 +105,7 @@ export function CreateJobPage() {
               value={form.freelancer}
               onChange={handleChange}
               placeholder="Freelancer address (devnet)"
-              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 font-mono text-sm outline-none transition focus:border-primary/50"
+              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 font-mono text-sm outline-none transition-colors duration-[--dur-micro] focus:border-primary/50"
             />
           </label>
 
@@ -119,13 +119,13 @@ export function CreateJobPage() {
               onChange={handleChange}
               placeholder="100.00"
               inputMode="decimal"
-              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition focus:border-primary/50"
+              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition-colors duration-[--dur-micro] focus:border-primary/50"
             />
           </label>
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-muted">
-              Brief — only its SHA-256 goes on-chain; keep the text yourself
+              Brief. Only its SHA-256 goes on-chain, so keep the text yourself
             </span>
             <textarea
               name="brief"
@@ -133,7 +133,7 @@ export function CreateJobPage() {
               onChange={handleChange}
               rows={4}
               placeholder="Scope, deliverables and terms of the job..."
-              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition focus:border-primary/50"
+              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition-colors duration-[--dur-micro] focus:border-primary/50"
             />
           </label>
 
@@ -145,7 +145,7 @@ export function CreateJobPage() {
               name="reviewWindowDays"
               value={form.reviewWindowDays}
               onChange={handleChange}
-              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition focus:border-primary/50"
+              className="w-full rounded-xl border border-border-low bg-background/60 px-4 py-2.5 text-sm outline-none transition-colors duration-[--dur-micro] focus:border-primary/50"
             >
               {[1, 3, 7, 14, 30].map((d) => (
                 <option key={d} value={d}>
@@ -165,7 +165,7 @@ export function CreateJobPage() {
           <button
             type="submit"
             disabled={!isFormValid || isBusy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-5 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-5 py-3.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px disabled:pointer-events-none disabled:opacity-40"
           >
             {isBusy ? (
               <>
@@ -175,7 +175,7 @@ export function CreateJobPage() {
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                Create job & deposit funds
+                Create & deposit funds
               </>
             )}
           </button>

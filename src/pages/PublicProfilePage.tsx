@@ -4,6 +4,7 @@ import { address, type Address } from "@solana/kit";
 import { useSolanaClient } from "@solana/react-hooks";
 import { motion, type Variants } from "framer-motion";
 import {
+  ArrowRight,
   BadgeCheck,
   ExternalLink,
   Home,
@@ -15,7 +16,6 @@ import { useMyJobs, type MyJob } from "../hooks/useMyJobs";
 import { JobState } from "../generated/repulink/types/jobState";
 import { formatUsdc } from "../lib/usdc";
 import { tokenLabel } from "../lib/tokens";
-import { STATE_META } from "../lib/job-state";
 import { findJobAttestation, explorerAddressUrl } from "../lib/sas";
 
 const containerVariants: Variants = {
@@ -146,42 +146,56 @@ export function PublicProfilePage() {
       >
         <motion.section
           variants={itemVariants}
-          className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0A0A0A]/60 p-8 backdrop-blur-2xl sm:p-10"
+          className="relative overflow-hidden rounded-2xl border border-border-low bg-elev-1 p-7 sm:p-9"
         >
-          <div className="absolute right-0 top-0 -z-10 h-64 w-64 rounded-full bg-primary/20 blur-[80px]" />
+          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/10 blur-[70px]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-edge-highlight to-transparent" />
 
-          <div className="relative z-10 flex flex-col justify-between gap-8 sm:flex-row sm:items-center">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary-light">
-                <Wallet className="h-3.5 w-3.5" /> Escrow track record
-              </div>
-              <h1 className="break-all font-mono text-xl font-bold text-white sm:text-2xl">
-                {walletAddress.slice(0, 8)}…{walletAddress.slice(-8)}
+          <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="min-w-0 space-y-3">
+              <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-light">
+                <Wallet className="h-3 w-3" /> Escrow track record
+              </p>
+              <h1 className="break-all font-mono text-lg font-medium text-white sm:text-2xl">
+                {walletAddress.slice(0, 6)}…{walletAddress.slice(-6)}
               </h1>
               <a
                 href={explorerAddressUrl(walletAddress)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-muted transition hover:text-primary"
+                className="inline-flex items-center gap-1 text-xs text-muted transition-colors duration-[--dur-micro] hover:text-primary-light"
               >
                 View on Explorer <ExternalLink className="h-3 w-3" />
               </a>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="flex shrink-0 divide-x divide-border-low rounded-xl border border-border-low bg-background/50">
               {[
-                { label: "Delivered & paid", value: settled.length },
-                { label: "Attested", value: Object.keys(attested).length },
-                { label: "Client-side jobs", value: asClient },
+                {
+                  label: "Delivered & paid",
+                  value: settled.length,
+                  tone: "text-state-done",
+                },
+                {
+                  label: "Attested",
+                  value: Object.keys(attested).length,
+                  tone: "text-state-done",
+                },
+                {
+                  label: "Client-side jobs",
+                  value: asClient,
+                  tone: "text-state-funded",
+                },
               ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <p className="mb-1 text-2xl font-black leading-none text-white sm:text-3xl">
+                <div key={stat.label} className="px-5 py-4 text-center sm:px-7">
+                  <p
+                    className={`font-heading text-3xl font-black leading-none tabular ${
+                      stat.value > 0 ? stat.tone : "text-muted/40"
+                    }`}
+                  >
                     {stat.value}
                   </p>
-                  <p className="text-center text-[10px] font-bold uppercase tracking-widest text-muted">
+                  <p className="mt-1.5 text-[9px] font-bold uppercase tracking-widest text-muted">
                     {stat.label}
                   </p>
                 </div>
@@ -190,11 +204,11 @@ export function PublicProfilePage() {
           </div>
 
           {settled.length > 0 && (
-            <p className="relative z-10 mt-6 border-t border-white/5 pt-5 text-sm text-muted">
+            <p className="relative z-10 mt-7 border-t border-border-low pt-5 text-sm leading-relaxed text-muted">
               Every job below was funded into an escrow vault and released
               either by the client approving the delivery or by the freelancer
               claiming after the review window. It is derived from on-chain
-              escrow state, not from anything the wallet declared — though the
+              escrow state, not from anything the wallet declared. Note that the
               delivery itself is a hash the freelancer supplies, and any SPL
               token can be used, so read the amounts together with the mint.
             </p>
@@ -218,7 +232,7 @@ export function PublicProfilePage() {
           </h2>
 
           {settled.length === 0 ? (
-            <div className="rounded-3xl glass-panel px-6 py-16 text-center">
+            <div className="rounded-2xl border border-dashed border-border-low px-6 py-16 text-center">
               <p className="text-base font-bold text-foreground">
                 No completed jobs yet
               </p>
@@ -229,45 +243,50 @@ export function PublicProfilePage() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <ul className="divide-y divide-border-low overflow-hidden rounded-2xl border border-border-low bg-elev-1">
               {settled.map((job) => {
-                const meta = STATE_META[job.account.state];
                 const attestation = attested[job.address];
                 return (
-                  <a
-                    key={job.address}
-                    href={`/job/${job.address}`}
-                    className="group space-y-2 rounded-2xl glass-panel p-5 transition hover:-translate-y-0.5 hover:border-primary/40"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full border bg-background/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.className}`}
-                      >
-                        {meta.label}
+                  <li key={job.address}>
+                    <a
+                      href={`/job/${job.address}`}
+                      className="group flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-4 transition-colors duration-[--dur-fast] hover:bg-elev-2"
+                    >
+                      <span className="font-heading text-xl font-black text-white tabular">
+                        {formatUsdc(job.account.amount)}
                       </span>
-                      {attestation && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-green-400/30 bg-green-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-green-400">
-                          <BadgeCheck className="h-3 w-3" /> Attested
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-lg font-bold text-foreground">
-                      {formatUsdc(job.account.amount)}{" "}
-                      <span className="text-xs font-normal text-muted">
+                      <span className="text-xs text-muted">
                         {tokenLabel(job.account.mint)}
                       </span>
-                    </p>
-                    <p className="truncate font-mono text-[10px] text-muted/60">
-                      mint {job.account.mint.slice(0, 6)}…
-                      {job.account.mint.slice(-6)}
-                    </p>
-                    <p className="truncate font-mono text-[11px] text-muted">
-                      {job.address.slice(0, 10)}…{job.address.slice(-10)}
-                    </p>
-                  </a>
+
+                      <span className="inline-flex items-center gap-1 rounded-full border border-state-done/30 bg-state-done/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-state-done">
+                        Released
+                      </span>
+                      {attestation ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-state-done/30 bg-state-done/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-state-done">
+                          <BadgeCheck className="h-3 w-3" /> Attested
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-border-low px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted/60">
+                          Not attested
+                        </span>
+                      )}
+
+                      <span className="ml-auto flex items-center gap-3 font-mono text-[11px] text-muted">
+                        <span className="hidden sm:inline">
+                          mint {job.account.mint.slice(0, 4)}…
+                          {job.account.mint.slice(-4)}
+                        </span>
+                        <span>
+                          {job.address.slice(0, 6)}…{job.address.slice(-6)}
+                        </span>
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-[--dur-micro] group-hover:translate-x-0.5 group-hover:text-primary-light" />
+                      </span>
+                    </a>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </motion.section>
 
@@ -281,34 +300,34 @@ export function PublicProfilePage() {
                 Agreements that ended in arbitration. These are listed for
                 transparency, not counted as completed work: a dispute can be
                 opened before any delivery, and the arbiter may award any share
-                — including nothing — to the freelancer.
+                to the freelancer, including nothing at all.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {disputes.map((job) => {
-                const meta = STATE_META[job.account.state];
-                return (
+            <ul className="divide-y divide-border-low overflow-hidden rounded-2xl border border-border-low bg-background/40">
+              {disputes.map((job) => (
+                <li key={job.address}>
                   <a
-                    key={job.address}
                     href={`/job/${job.address}`}
-                    className="space-y-2 rounded-2xl border border-border-low bg-background/40 p-5 transition hover:border-primary/40"
+                    className="group flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-4 transition-colors duration-[--dur-fast] hover:bg-elev-1"
                   >
-                    <span
-                      className={`inline-block rounded-full border bg-background/60 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${meta.className}`}
-                    >
-                      {meta.label}
+                    <span className="inline-flex items-center gap-1 rounded-full border border-state-idle/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-state-idle">
+                      Resolved
                     </span>
-                    <p className="text-sm text-muted">
-                      escrowed {formatUsdc(job.account.amount)}{" "}
+                    <span className="text-sm text-muted">
+                      escrowed{" "}
+                      <span className="text-foreground tabular">
+                        {formatUsdc(job.account.amount)}
+                      </span>{" "}
                       {tokenLabel(job.account.mint)} · split by the arbiter
-                    </p>
-                    <p className="truncate font-mono text-[11px] text-muted">
-                      {job.address.slice(0, 10)}…{job.address.slice(-10)}
-                    </p>
+                    </span>
+                    <span className="ml-auto flex items-center gap-3 font-mono text-[11px] text-muted">
+                      {job.address.slice(0, 6)}…{job.address.slice(-6)}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-[--dur-micro] group-hover:translate-x-0.5" />
+                    </span>
                   </a>
-                );
-              })}
-            </div>
+                </li>
+              ))}
+            </ul>
           </motion.section>
         )}
       </motion.div>
