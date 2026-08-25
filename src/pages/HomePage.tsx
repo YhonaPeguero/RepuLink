@@ -115,16 +115,9 @@ export function HomePage() {
             work <span className="text-brand-gradient">happened.</span>
           </motion.h1>
 
-          <motion.p
-            variants={rise}
-            className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
-          >
-            Lock the money before the work starts. Keep the proof after.
-          </motion.p>
-
           <motion.div
             variants={rise}
-            className="mt-9 flex flex-wrap items-center gap-3"
+            className="mt-10 flex flex-wrap items-center gap-3"
           >
             {connected ? (
               <>
