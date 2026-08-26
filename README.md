@@ -19,22 +19,23 @@ no custody and no embedded wallet yet.
 It is deliberately **not** aimed at the general freelancer market. See
 [`docs/gtm.md`](./docs/gtm.md).
 
+**Live demo:** [repu-link.vercel.app](https://repu-link.vercel.app)
+
 **Program ID (devnet):** [`2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1`](https://explorer.solana.com/address/2mMN1jtUGZo6j9Fmq46JUTJ7639bV1aEvTXoxtu4ZtH1?cluster=devnet)
 
 ### Try it on devnet
 
 Five jobs are seeded on devnet, covering the key states of the lifecycle
-(`Created`, `Refunded` and `Disputed` are not among them). Run
-`npm run dev` and open any of them at `/job/<address>` — no wallet needed to
-read, and they are listed in the dashboard:
+(`Created`, `Refunded` and `Disputed` are not among them). No wallet is needed
+to read them, and they are listed in the dashboard:
 
-| State                      | Job                                                                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Funded                     | [`5C51c6jn…Zx9bK`](https://explorer.solana.com/address/5C51c6jnpxJGBpBVzDfjpocWWb2gQxogCS3Dw62Zx9bK?cluster=devnet) |
-| Delivered                  | [`GEuRR4qY…aVfbC`](https://explorer.solana.com/address/GEuRR4qYY6HmH1XK4DMH4eza4KKnawLdpCrWBV9aVfbC?cluster=devnet) |
-| Released **+ attested**    | [`Diqr5i19…Nj4kF`](https://explorer.solana.com/address/Diqr5i19MsKPiYYqydZtqyEfhiWusfMdTMJK8UPNj4kF?cluster=devnet) |
-| Released                   | [`92b9sExj…2VoRW`](https://explorer.solana.com/address/92b9sExjPbGkWsEqvmnmax2VdUAbit6qVThZVGQ2VoRW?cluster=devnet) |
-| Resolved (after a dispute) | [`G8yZcYFG…qoG4e`](https://explorer.solana.com/address/G8yZcYFG4fvvWvxM8BpMJZtYWRkqPnyhcTSR4ZWqoG4e?cluster=devnet) |
+| State                      | Open in RepuLink                                                                                  | On-chain                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Funded                     | [`5C51c6jn…Zx9bK`](https://repu-link.vercel.app/job/5C51c6jnpxJGBpBVzDfjpocWWb2gQxogCS3Dw62Zx9bK) | [Explorer](https://explorer.solana.com/address/5C51c6jnpxJGBpBVzDfjpocWWb2gQxogCS3Dw62Zx9bK?cluster=devnet) |
+| Delivered                  | [`GEuRR4qY…aVfbC`](https://repu-link.vercel.app/job/GEuRR4qYY6HmH1XK4DMH4eza4KKnawLdpCrWBV9aVfbC) | [Explorer](https://explorer.solana.com/address/GEuRR4qYY6HmH1XK4DMH4eza4KKnawLdpCrWBV9aVfbC?cluster=devnet) |
+| Released **+ attested**    | [`Diqr5i19…Nj4kF`](https://repu-link.vercel.app/job/Diqr5i19MsKPiYYqydZtqyEfhiWusfMdTMJK8UPNj4kF) | [Explorer](https://explorer.solana.com/address/Diqr5i19MsKPiYYqydZtqyEfhiWusfMdTMJK8UPNj4kF?cluster=devnet) |
+| Released                   | [`92b9sExj…2VoRW`](https://repu-link.vercel.app/job/92b9sExjPbGkWsEqvmnmax2VdUAbit6qVThZVGQ2VoRW) | [Explorer](https://explorer.solana.com/address/92b9sExjPbGkWsEqvmnmax2VdUAbit6qVThZVGQ2VoRW?cluster=devnet) |
+| Resolved (after a dispute) | [`G8yZcYFG…qoG4e`](https://repu-link.vercel.app/job/G8yZcYFG4fvvWvxM8BpMJZtYWRkqPnyhcTSR4ZWqoG4e) | [Explorer](https://explorer.solana.com/address/G8yZcYFG4fvvWvxM8BpMJZtYWRkqPnyhcTSR4ZWqoG4e?cluster=devnet) |
 
 > **These jobs do not settle in Circle USDC.** They use
 > `493AbaKC2R8VrmYz7oFWk6JD7UkMeozcfSLJcrQUc4Wj`, a 6-decimal SPL test token the
