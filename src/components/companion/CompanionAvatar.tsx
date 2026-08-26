@@ -71,7 +71,7 @@ export function CompanionAvatar({
       {/* El escudo */}
       <div className="absolute inset-[3px] overflow-hidden rounded-full border border-white/10 bg-background">
         <img
-          src="/logo-repulink.png"
+          src="/logo-repulink-128.png"
           alt=""
           className="h-full w-full object-cover"
         />

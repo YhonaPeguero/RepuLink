@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { Wallet, LogOut, Plus } from "lucide-react";
 import { SolanaMark } from "../brand/SolanaMark";
 
-const logo = "/logo-repulink.png";
+// 128px basta: en el header se dibuja a 32-40px. El original de 1254px
+// pesaba 1,12 MB y se descargaba en cada visita.
+const logo = "/logo-repulink-128.png";
 
 export function Header() {
   const { wallet, status, disconnect, connectors, connect } =

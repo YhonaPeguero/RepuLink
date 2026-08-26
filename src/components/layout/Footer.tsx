@@ -13,7 +13,7 @@ export function Footer() {
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2">
             <img
-              src="/logo-repulink.png"
+              src="/logo-repulink-128.png"
               alt=""
               className="h-6 w-6 rounded-md object-cover"
             />
