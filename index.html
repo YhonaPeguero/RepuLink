@@ -46,11 +46,78 @@
       html.app-ready #boot {
         opacity: 0;
       }
+      #boot-error {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        place-content: center;
+        padding: 2rem;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        color: #a1a1aa;
+        background: #08080a;
+        text-align: center;
+      }
+      html.boot-failed #boot-error {
+        display: grid;
+      }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <div id="boot"></div>
+    <div id="boot-error">
+      <div>
+        <p style="color: #fff; font-weight: 700; margin: 0 0 0.5rem">
+          RepuLink no pudo arrancar
+        </p>
+        <p style="margin: 0 0 1rem">
+          Revisa la consola del navegador. Lo más habitual es que falte
+          <code>.env</code> (copia <code>.env.example</code>) o que el servidor
+          de desarrollo se haya reiniciado.
+        </p>
+        <button
+          onclick="location.reload()"
+          style="
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #141416;
+            color: #fff;
+            cursor: pointer;
+          "
+        >
+          Recargar
+        </button>
+      </div>
+    </div>
+    <script>
+      // El velo nunca debe sobrevivir al arranque. Si React monta, main.tsx
+      // añade .app-ready. Si algo falla antes (un throw en tiempo de import),
+      // este temporizador lo retira igualmente y enseña el motivo, en vez de
+      // dejar una pantalla negra dando vueltas.
+      (function () {
+        var html = document.documentElement;
+        function reveal() {
+          html.classList.add("app-ready");
+        }
+        window.addEventListener("load", function () {
+          setTimeout(reveal, 50);
+        });
+        setTimeout(function () {
+          reveal();
+          var root = document.getElementById("root");
+          if (!root || root.childElementCount === 0) {
+            html.classList.add("boot-failed");
+          }
+        }, 2500);
+        window.addEventListener("error", function () {
+          reveal();
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
