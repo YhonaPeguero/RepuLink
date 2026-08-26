@@ -102,7 +102,7 @@ export function HomePage() {
             variants={rise}
             className="inline-flex items-center gap-2 rounded-full border border-border-low bg-elev-1 py-1.5 pl-2 pr-3.5 text-[10px] font-bold uppercase tracking-[0.16em] text-muted backdrop-blur-sm"
           >
-            <SolanaMark className="h-2.5 w-auto" />
+            <SolanaMark className="h-4 w-auto" />
             Built on Solana
           </motion.span>
 

@@ -26,7 +26,7 @@ export function Footer() {
             Devnet preview, unaudited.
           </p>
           <div className="flex items-center gap-2 pt-1">
-            <SolanaMark className="h-3 w-auto" />
+            <SolanaMark className="h-4 w-auto" />
             <span className="text-[10px] font-semibold uppercase tracking-widest text-muted/60">
               Built on Solana
             </span>

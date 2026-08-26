@@ -38,7 +38,7 @@ export function Header() {
             </span>
           </span>
           <span className="ml-2 inline-flex items-center gap-1.5 rounded-full border border-border-low bg-elev-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted">
-            <SolanaMark className="h-2 w-auto" />
+            <SolanaMark className="h-3 w-auto" />
             Devnet
           </span>
         </a>
