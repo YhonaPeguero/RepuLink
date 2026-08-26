@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useWalletConnection } from "@solana/react-hooks";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronUp, Compass, X } from "lucide-react";
+import { ArrowRight, ChevronUp, X } from "lucide-react";
 import {
   messageFor,
   TOPICS,
@@ -101,9 +101,15 @@ export function Companion() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourStep]);
 
+  // Estado descartado: no una brújula gris, sino la misma presencia de la guía.
+  // Late despacio, lleva el color del contexto actual y al pasar por encima se
+  // abre para decir qué es. Debe invitar a volver, no esconderse.
   if (hidden) {
     return (
-      <button
+      <motion.button
+        initial={reduced ? false : { scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.45, ease: [0.34, 1.4, 0.64, 1] }}
         onClick={() => {
           setHidden(false);
           try {
@@ -113,10 +119,28 @@ export function Companion() {
           }
         }}
         aria-label="Show the guide"
-        className="fixed bottom-5 right-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border-low bg-elev-2 text-muted shadow-lg backdrop-blur-xl transition-all duration-[--dur-micro] hover:-translate-y-0.5 hover:text-white"
+        className="group fixed bottom-5 right-5 z-40 flex items-center gap-0 rounded-full border border-border-low bg-[#0c0c10] py-1.5 pl-1.5 pr-1.5 shadow-[0_10px_30px_-10px_rgba(153,69,255,0.7)] transition-all duration-[--dur-fast] hover:gap-2.5 hover:border-primary/40 hover:pr-4"
+        style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
       >
-        <Compass className="h-5 w-5" />
-      </button>
+        {/* Flotación lenta: viva sin llamar la atención a gritos */}
+        <motion.span
+          animate={reduced ? {} : { y: [0, -2.5, 0] }}
+          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+          className="block"
+        >
+          <CompanionAvatar size={34} tone={msg.tone} />
+        </motion.span>
+
+        {/* El nombre aparece al acercarse: descubre qué es sin ocupar sitio */}
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-bold text-white opacity-0 transition-all duration-[--dur-fast] group-hover:max-w-[7rem] group-hover:opacity-100">
+          Guide
+        </span>
+
+        {/* Punto de estado: el mismo color que tendría el riel aquí */}
+        <span
+          className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0c0c10] ${tone.bar}`}
+        />
+      </motion.button>
     );
   }
 
