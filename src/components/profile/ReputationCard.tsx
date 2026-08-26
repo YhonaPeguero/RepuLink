@@ -59,7 +59,7 @@ export function ReputationCard({
             <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-primary-light">
               Trust Score
             </p>
-            <p className="text-3xl sm:text-4xl font-black drop-shadow-[0_0_15px_rgba(153,69,255,0.8)] neon-text text-white">
+            <p className="text-3xl sm:text-4xl font-black neon-text text-white">
               {score}%
             </p>
           </div>

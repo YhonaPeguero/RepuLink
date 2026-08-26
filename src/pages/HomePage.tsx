@@ -154,7 +154,7 @@ export function HomePage() {
                     See a settled agreement
                   </PrimaryCTA>
                 </Magnetic>
-                <GhostCTA href="/dashboard">Browse devnet agreements</GhostCTA>
+                <GhostCTA href="/dashboard">Browse agreements</GhostCTA>
               </>
             )}
           </motion.div>

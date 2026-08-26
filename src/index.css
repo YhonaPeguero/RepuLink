@@ -28,12 +28,15 @@
      así que el CTA más visible de la app venía pintado a medias con el color
      que en todo el resto significa "el dinero está en el vault". Además
      morado→azul a 135° es el gradiente por defecto de cualquier plantilla.
-     Arranca en el --accent oficial para no tocar la identidad; el otro extremo
-     viaja a H≈318, a 58° del azul funded y a 116° del rojo alert, así que no
-     invade ningún estado. Croma casi constante (0.256→0.235) en vez del 27%
-     que perdía la rampa anterior, y contraste con blanco 4.52→6.30: la mitad
-     azul de antes se quedaba en 3.68 e incumplía WCAG AA. */
-  --brand-orchid: #9d1cbd;
+     Arranca en el --accent oficial y viaja a H≈309, hacia el magenta del logo
+     de Solana (#DC1FFF, H=320) pero sin llegar: ese magenta da 3.70 de
+     contraste con texto blanco y ninguno de los dos colores del logo es usable
+     como fondo (el teal #00FFA3 da 1.33, y además choca con --state-done).
+     A 49° del azul funded y 107° del rojo alert, así que no invade ningún
+     estado. Croma casi constante en vez del 27% que perdía la rampa anterior,
+     y contraste 4.52→5.43: la mitad azul de antes se quedaba en 3.68 e
+     incumplía WCAG AA. */
+  --brand-orchid: #9e2bdf;
   --brand-halo: rgba(153, 69, 255, 0.35);
   --brand-gradient: linear-gradient(
     135deg,
