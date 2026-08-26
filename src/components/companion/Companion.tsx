@@ -258,7 +258,7 @@ export function Companion() {
                               s !== null && s < TOUR.length - 1 ? s + 1 : null
                             )
                           }
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
+                          className="inline-flex items-center gap-1.5 rounded-lg btn-brand px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
                         >
                           {tourStep < TOUR.length - 1 ? "Next" : "Finish"}
                           <ArrowRight className="h-3 w-3" />
@@ -299,7 +299,7 @@ export function Companion() {
                         {location.pathname === "/" && (
                           <button
                             onClick={() => setTourStep(0)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
+                            className="inline-flex items-center gap-1.5 rounded-lg btn-brand px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
                           >
                             Start the flow
                             <ArrowRight className="h-3 w-3" />

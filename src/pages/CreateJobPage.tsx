@@ -165,7 +165,7 @@ export function CreateJobPage() {
           <button
             type="submit"
             disabled={!isFormValid || isBusy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-5 py-3.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px disabled:pointer-events-none disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-xl btn-brand px-5 py-3.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px disabled:pointer-events-none disabled:opacity-40"
           >
             {isBusy ? (
               <>

@@ -132,7 +132,7 @@ export function HomePage() {
                   <button
                     onClick={() => connect(primaryWallet.id)}
                     disabled={status === "connecting"}
-                    className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-gradient px-6 py-3.5 text-sm font-bold text-white shadow-[0_10px_36px_-10px_rgba(153,69,255,0.7)] transition-transform duration-[--dur-micro] hover:-translate-y-0.5 disabled:opacity-50"
+                    className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl btn-brand px-6 py-3.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-0.5 disabled:opacity-50"
                   >
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     <span className="relative">
@@ -355,7 +355,7 @@ function PrimaryCTA({
   return (
     <a
       href={href}
-      className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-gradient px-6 py-3.5 text-sm font-bold text-white shadow-[0_10px_36px_-10px_rgba(153,69,255,0.7)] transition-transform duration-[--dur-micro] hover:-translate-y-0.5"
+      className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl btn-brand px-6 py-3.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-0.5"
     >
       <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
       <span className="relative">{children}</span>

@@ -23,11 +23,22 @@
 
   --accent-gold: #fbbf24;
 
-  /* Gradiente de marca */
+  /* ── Rampa de marca ───────────────────────────────────────────────────
+     Violeta → orquídea. Deliberadamente SIN azul: #3B82F6 es --state-funded,
+     así que el CTA más visible de la app venía pintado a medias con el color
+     que en todo el resto significa "el dinero está en el vault". Además
+     morado→azul a 135° es el gradiente por defecto de cualquier plantilla.
+     Arranca en el --accent oficial para no tocar la identidad; el otro extremo
+     viaja a H≈318, a 58° del azul funded y a 116° del rojo alert, así que no
+     invade ningún estado. Croma casi constante (0.256→0.235) en vez del 27%
+     que perdía la rampa anterior, y contraste con blanco 4.52→6.30: la mitad
+     azul de antes se quedaba en 3.68 e incumplía WCAG AA. */
+  --brand-orchid: #9d1cbd;
+  --brand-halo: rgba(153, 69, 255, 0.35);
   --brand-gradient: linear-gradient(
     135deg,
     var(--accent) 0%,
-    var(--secondary) 100%
+    var(--brand-orchid) 100%
   );
 
   --muted: #a1a1aa; /* zinc-400 */
@@ -177,12 +188,47 @@
   /* Gradiente de marca: fondo y texto */
   .bg-brand-gradient {
     background-image: var(--brand-gradient);
+    background-image: linear-gradient(
+      135deg in oklch,
+      var(--accent),
+      var(--brand-orchid)
+    );
   }
   .text-brand-gradient {
     background-image: var(--brand-gradient);
+    background-image: linear-gradient(
+      135deg in oklch,
+      var(--accent),
+      var(--brand-orchid)
+    );
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+
+  /* Superficie de marca para controles.
+     Iluminada desde arriba en lugar de lavada en diagonal: un botón es una
+     pieza física y la luz cae sobre él, no lo cruza. El filo superior es el
+     mismo recurso que ya usan los paneles (--edge-highlight), así que el botón
+     pertenece al sistema de elevación en vez de flotar aparte.
+     La segunda declaración interpola en OKLCH: sin ella la rampa pierde croma
+     por el camino y se ve sucia en el centro. El navegador que no la entienda
+     se queda con la primera, que es la misma rampa en sRGB. */
+  .btn-brand {
+    background-image: linear-gradient(
+      180deg,
+      var(--accent),
+      var(--brand-orchid)
+    );
+    background-image: linear-gradient(
+      180deg in oklch,
+      var(--accent),
+      var(--brand-orchid)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 10px 24px -16px rgba(0, 0, 0, 0.9),
+      0 8px 26px -14px var(--brand-halo);
   }
 
   .glass-panel {

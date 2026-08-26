@@ -129,7 +129,7 @@ export function CompanionWelcome({
           >
             <button
               onClick={onTour}
-              className="group inline-flex items-center gap-2 rounded-xl bg-brand-gradient px-5 py-3 text-sm font-bold text-white shadow-[0_10px_30px_-10px_rgba(153,69,255,0.8)] transition-transform duration-[--dur-micro] hover:-translate-y-0.5"
+              className="group inline-flex items-center gap-2 rounded-xl btn-brand px-5 py-3 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-0.5"
             >
               <Compass className="h-4 w-4" />
               Show me around

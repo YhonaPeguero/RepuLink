@@ -502,7 +502,7 @@ export function JobPage() {
                   onClick={() =>
                     run(() => escrow.markDelivered(jobAddress, deliveryRef))
                   }
-                  className={`${btn} w-full bg-brand-gradient text-white hover:opacity-90`}
+                  className={`${btn} w-full btn-brand text-white hover:opacity-90`}
                 >
                   <PackageCheck className="h-4 w-4" /> Deliver work
                 </button>
@@ -514,7 +514,7 @@ export function JobPage() {
               <button
                 disabled={escrow.isBusy}
                 onClick={() => run(() => escrow.approveRelease(jobAddress))}
-                className={`${btn} w-full bg-brand-gradient text-white hover:opacity-90`}
+                className={`${btn} w-full btn-brand text-white hover:opacity-90`}
               >
                 <CheckCircle2 className="h-4 w-4" /> Approve & release payment
               </button>
@@ -591,7 +591,7 @@ export function JobPage() {
                       )
                     )
                   }
-                  className={`${btn} w-full bg-brand-gradient text-white hover:opacity-90`}
+                  className={`${btn} w-full btn-brand text-white hover:opacity-90`}
                 >
                   Resolve & split funds
                 </button>

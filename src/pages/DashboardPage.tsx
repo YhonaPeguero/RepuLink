@@ -118,7 +118,7 @@ export function DashboardPage() {
               </div>
               <a
                 href="/job/create"
-                className="mt-2 flex items-center gap-2 rounded-xl bg-brand-gradient px-5 py-2.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
+                className="mt-2 flex items-center gap-2 rounded-xl btn-brand px-5 py-2.5 text-sm font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
               >
                 <Plus className="h-4 w-4" /> Create your first agreement
               </a>
