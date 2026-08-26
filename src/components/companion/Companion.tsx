@@ -102,8 +102,8 @@ export function Companion() {
   }, [tourStep]);
 
   // Estado descartado: no una brújula gris, sino la misma presencia de la guía.
-  // Late despacio, lleva el color del contexto actual y al pasar por encima se
-  // abre para decir qué es. Debe invitar a volver, no esconderse.
+  // Late despacio, lleva el color del contexto actual y dice siempre qué es:
+  // en una pantalla táctil no existe hover para descubrirlo.
   if (hidden) {
     return (
       <motion.button
@@ -119,7 +119,7 @@ export function Companion() {
           }
         }}
         aria-label="Show the guide"
-        className="group fixed bottom-5 right-5 z-40 flex items-center gap-0 rounded-full border border-border-low bg-[#0c0c10] py-1.5 pl-1.5 pr-1.5 shadow-[0_10px_30px_-10px_rgba(153,69,255,0.7)] transition-all duration-[--dur-fast] hover:gap-2.5 hover:border-primary/40 hover:pr-4"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full border border-border-low bg-[#0c0c10] py-1.5 pl-1.5 pr-4 shadow-[0_10px_30px_-10px_rgba(153,69,255,0.7)] transition-[transform,opacity] duration-[--dur-micro] hover:-translate-y-px hover:opacity-95"
         style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
       >
         {/* Flotación lenta: viva sin llamar la atención a gritos */}
@@ -128,17 +128,17 @@ export function Companion() {
           transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
           className="block"
         >
-          <CompanionAvatar size={34} tone={msg.tone} />
+          <CompanionAvatar size={44} tone={msg.tone} />
         </motion.span>
 
-        {/* El nombre aparece al acercarse: descubre qué es sin ocupar sitio */}
-        <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-bold text-white opacity-0 transition-all duration-[--dur-fast] group-hover:max-w-[7rem] group-hover:opacity-100">
+        {/* Visible también en touch: una cara sola no explica que abre la guía */}
+        <span className="whitespace-nowrap text-xs font-bold text-white">
           Guide
         </span>
 
         {/* Punto de estado: el mismo color que tendría el riel aquí */}
         <span
-          className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0c0c10] ${tone.bar}`}
+          className={`absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[#0c0c10] ${tone.bar}`}
         />
       </motion.button>
     );
