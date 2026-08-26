@@ -5,6 +5,8 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { PublicProfilePage } from "./pages/PublicProfilePage";
 import { CreateJobPage } from "./pages/CreateJobPage";
 import { JobPage } from "./pages/JobPage";
+import { Companion } from "./components/companion/Companion";
+import { CompanionProvider } from "./components/companion/CompanionContext";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -25,7 +27,10 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AnimatedRoutes />
+      <CompanionProvider>
+        <AnimatedRoutes />
+        <Companion />
+      </CompanionProvider>
     </BrowserRouter>
   );
 }
