@@ -24,6 +24,12 @@ export function Layout({ children }: PropsWithChildren) {
           {children}
         </motion.main>
         <Footer />
+        {/* Hueco para que el riel de la guía no tape el pie */}
+        <div
+          className="h-40 sm:h-32"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-hidden
+        />
       </div>
     </div>
   );

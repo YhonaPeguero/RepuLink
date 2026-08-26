@@ -23,6 +23,7 @@ import { formatUsdc } from "../lib/usdc";
 import { STATE_META, TERMINAL_STATES } from "../lib/job-state";
 import { LifecycleRail } from "../components/job/LifecycleRail";
 import { PartyAvatar } from "../components/brand/PartyAvatar";
+import { useCompanion } from "../components/companion/useCompanion";
 import {
   findJobAttestation,
   explorerAddressUrl,
@@ -71,6 +72,7 @@ export function JobPage() {
   const { jobAddress: jobAddressParam } = useParams<{ jobAddress: string }>();
   const client = useSolanaClient();
   const escrow = useEscrow();
+  const { setJob: setCompanionJob } = useCompanion();
 
   const [job, setJob] = useState<Job | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -136,6 +138,17 @@ export function JobPage() {
       cancelled = true;
     };
   }, [client, jobAddress, job]);
+
+  // El companion lee el estado del acuerdo desde aquí, sin consultar la red por
+  // su cuenta: así nunca puede mostrar un estado distinto al de esta página.
+  useEffect(() => {
+    setCompanionJob(
+      job && jobAddress
+        ? { address: jobAddress, state: job.state, freelancer: job.freelancer }
+        : null
+    );
+    return () => setCompanionJob(null);
+  }, [job, jobAddress, setCompanionJob]);
 
   const reviewDeadline =
     job && job.state === JobState.Delivered
