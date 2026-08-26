@@ -150,19 +150,18 @@ export function Companion() {
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 sm:pb-6">
         <motion.aside
-          layout
           initial={reduced ? false : { y: 90, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
           style={{ boxShadow: `0 18px 50px -18px ${tone.glow}` }}
-          className="pointer-events-auto max-h-[60vh] w-full max-w-2xl overflow-y-auto overflow-x-hidden rounded-2xl border border-border-low bg-background/85 backdrop-blur-2xl"
+          className="pointer-events-auto max-h-[60vh] w-full max-w-2xl overflow-y-auto overflow-x-hidden rounded-2xl border border-border-strong bg-[#0c0c10]"
           aria-label="Contextual guide"
         >
           {/* Filo de estado: el mismo color que usa el rail del acuerdo */}
-          <motion.div layout className={`h-[3px] w-full ${tone.bar}`} />
+          <motion.div className={`h-[3px] w-full ${tone.bar}`} layout={false} />
 
           <div className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
-            <motion.div layout className="mt-0.5">
+            <motion.div className="mt-0.5">
               <CompanionAvatar size={34} tone={msg.tone} speaking={inTour} />
             </motion.div>
 
@@ -184,11 +183,11 @@ export function Companion() {
                 {open && !inTour && msg.body && (
                   <motion.p
                     key={msg.body}
-                    initial={reduced ? false : { opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="mt-1 overflow-hidden text-xs leading-relaxed text-muted"
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="mt-1 text-xs leading-relaxed text-muted"
                   >
                     {msg.body}
                   </motion.p>
@@ -200,11 +199,11 @@ export function Companion() {
                 {topic && !inTour && (
                   <motion.div
                     key={topic}
-                    initial={reduced ? false : { opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.24, delay: 0.05 }}
+                    className=""
                   >
                     <div className="mt-3 rounded-xl border border-border-low bg-elev-1 p-3.5">
                       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
