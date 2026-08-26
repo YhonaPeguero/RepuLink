@@ -44,12 +44,12 @@ export const TOPICS: Record<TopicKey, { title: string; body: string }> = {
     body: "The payer deposits into a vault owned by the agreement's own program address. Nobody can transfer out of it by hand: funds only move through the payout, refund and dispute paths of the state machine, and every one of them checks a signature.",
   },
   states: {
-    title: "The four states",
+    title: "The happy path",
     body: "Created, then Funded once the money is in, then Delivered when the worker marks the delivery, then Released when the payer approves or the worker claims after the review window. A dispute and a refund are the two ways out of that line.",
   },
   reputation: {
     title: "Where reputation comes from",
-    body: "Only from agreements that were funded on-chain and released. Nothing here is declared by the wallet itself. Resolved disputes are listed separately and never counted as completed work, because a dispute can be opened before any delivery.",
+    body: "From agreements that were funded on-chain and released, not from self-declared badges. Two caveats worth knowing: the delivery is a hash the worker supplies, and any SPL token can be used. Resolved disputes are listed separately and never counted as completed work, because a dispute can be opened before any delivery.",
   },
   attestation: {
     title: "What an attestation is",
@@ -61,7 +61,7 @@ export const TOPICS: Record<TopicKey, { title: string; body: string }> = {
   },
   fee: {
     title: "The 1% fee",
-    body: "Frozen into each agreement when it is created, so a later config change never alters the economics of an agreement already in flight. On release the fee goes to the treasury and the remainder to the worker.",
+    body: "The rate is frozen into the agreement when it is created, so a later config change cannot raise it. The destination is not frozen: the fee goes to whatever treasury the live Config points at when the payout happens. The remainder goes to the worker.",
   },
   wallet: {
     title: "About your wallet",
@@ -91,7 +91,7 @@ const STATE_MESSAGE: Record<JobState, Omit<CompanionMessage, "actions">> = {
     tone: "done",
   },
   [JobState.Refunded]: {
-    headline: "Cancelled. The full amount went back to the payer.",
+    headline: "Cancelled. Any escrowed funds went back to the payer.",
     body: "No fee was charged. A cancelled agreement is not work history.",
     tone: "idle",
   },
@@ -110,6 +110,9 @@ const STATE_MESSAGE: Record<JobState, Omit<CompanionMessage, "actions">> = {
 export type RouteContext = {
   pathname: string;
   jobState?: JobState;
+  /** Dirección del acuerdo al que pertenece `jobState`. Sin ella, al saltar de
+   * un acuerdo a otro se podía pintar por un instante el estado del anterior. */
+  jobAddress?: string;
   /** Dirección del trabajador, para poder saltar a su historial. */
   jobFreelancer?: string;
   isConnected: boolean;
@@ -117,7 +120,13 @@ export type RouteContext = {
 
 /** Qué mostrar ahora mismo. Sin efectos, sin red: solo lo que ya sabemos. */
 export function messageFor(ctx: RouteContext): CompanionMessage {
-  const { pathname, jobState, jobFreelancer, isConnected } = ctx;
+  // Normalizar la barra final: `/job/create/` debe seguir siendo Create.
+  const pathname = ctx.pathname.replace(/\/+$/, "") || "/";
+  const { jobFreelancer, isConnected } = ctx;
+  // El estado solo vale si corresponde al acuerdo que se está mirando.
+  const routeJob = pathname.startsWith("/job/") ? pathname.slice(5) : null;
+  const jobState =
+    routeJob && ctx.jobAddress === routeJob ? ctx.jobState : undefined;
 
   if (pathname.startsWith("/job/") && pathname !== "/job/create") {
     if (jobState === undefined) {
@@ -133,14 +142,16 @@ export function messageFor(ctx: RouteContext): CompanionMessage {
     const actions: CompanionAction[] = [
       { kind: "explain", label: "Explain this state", topic: "states" },
     ];
-    if (jobState === JobState.Released || jobState === JobState.Resolved) {
+    // La atestación solo se emite sobre Released: el script la rechaza para
+    // Resolved porque el Job no conserva el reparto que decidió el árbitro.
+    if (jobState === JobState.Released) {
       actions.push({
         kind: "explain",
         label: "What is an attestation",
         topic: "attestation",
       });
     }
-    if (jobState === JobState.Disputed) {
+    if (jobState === JobState.Disputed || jobState === JobState.Resolved) {
       actions.push({
         kind: "explain",
         label: "How disputes end",
@@ -197,7 +208,7 @@ export function messageFor(ctx: RouteContext): CompanionMessage {
   if (pathname.startsWith("/profile/")) {
     return {
       headline: "This reputation comes from completed on-chain agreements.",
-      body: "Not from anything the wallet declared about itself.",
+      body: "Derived from on-chain escrow state, not from self-declared badges.",
       actions: [
         { kind: "explain", label: "How reputation works", topic: "reputation" },
         {

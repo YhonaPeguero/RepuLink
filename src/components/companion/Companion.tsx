@@ -79,6 +79,7 @@ export function Companion() {
 
   const msg = messageFor({
     pathname: location.pathname,
+    jobAddress: job?.address,
     jobState: job?.state,
     jobFreelancer: job?.freelancer,
     isConnected: status === "connected",
@@ -154,8 +155,8 @@ export function Companion() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
           style={{ boxShadow: `0 18px 50px -18px ${tone.glow}` }}
-          className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-border-low bg-background/85 backdrop-blur-2xl"
-          aria-live="polite"
+          className="pointer-events-auto max-h-[60vh] w-full max-w-2xl overflow-y-auto overflow-x-hidden rounded-2xl border border-border-low bg-background/85 backdrop-blur-2xl"
+          aria-label="Contextual guide"
         >
           {/* Filo de estado: el mismo color que usa el rail del acuerdo */}
           <motion.div layout className={`h-[3px] w-full ${tone.bar}`} />
@@ -165,7 +166,7 @@ export function Companion() {
               <CompanionAvatar size={34} tone={msg.tone} speaking={inTour} />
             </motion.div>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1" role="status" aria-live="polite">
               <AnimatePresence mode="wait">
                 <motion.p
                   key={inTour ? `tour-${tourStep}` : msg.headline}

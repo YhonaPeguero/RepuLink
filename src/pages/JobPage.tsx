@@ -143,10 +143,12 @@ export function JobPage() {
   // su cuenta: así nunca puede mostrar un estado distinto al de esta página.
   useEffect(() => {
     setCompanionJob(
-      job ? { state: job.state, freelancer: job.freelancer } : null
+      job && jobAddress
+        ? { address: jobAddress, state: job.state, freelancer: job.freelancer }
+        : null
     );
     return () => setCompanionJob(null);
-  }, [job, setCompanionJob]);
+  }, [job, jobAddress, setCompanionJob]);
 
   const reviewDeadline =
     job && job.state === JobState.Delivered

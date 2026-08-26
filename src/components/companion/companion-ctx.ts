@@ -12,7 +12,13 @@ import { JobState } from "../../generated/repulink/types/jobState";
  * El contexto vive en su propio archivo, sin componentes, porque mezclarlo con
  * el provider rompe Fast Refresh.
  */
-export type CompanionJob = { state: JobState; freelancer: string } | null;
+export type CompanionJob = {
+  /** A qué acuerdo pertenece este estado. La guía lo compara con la ruta antes
+   * de usarlo, para no pintar el estado del acuerdo anterior al navegar. */
+  address: string;
+  state: JobState;
+  freelancer: string;
+} | null;
 
 export type CompanionCtxValue = {
   job: CompanionJob;
