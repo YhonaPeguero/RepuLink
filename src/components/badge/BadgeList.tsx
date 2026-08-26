@@ -13,14 +13,19 @@ const container: Variants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const item: Variants = {
   hidden: { opacity: 0, scale: 0.95, y: 15 },
-  show: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
 };
 
 export function BadgeList({ badges, onShare, isLoading }: BadgeListProps) {
@@ -42,7 +47,7 @@ export function BadgeList({ badges, onShare, isLoading }: BadgeListProps) {
 
   if (badges.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="rounded-2xl glass-panel p-10 text-center flex flex-col items-center justify-center min-h-[200px]"
@@ -52,14 +57,15 @@ export function BadgeList({ badges, onShare, isLoading }: BadgeListProps) {
         </div>
         <p className="text-base font-medium text-foreground">No badges yet.</p>
         <p className="mt-1 text-xs text-muted max-w-sm">
-          Create your first badge and send it to a client to start building your on-chain reputation.
+          Create your first badge and send it to a client to start building your
+          on-chain reputation.
         </p>
       </motion.div>
     );
   }
 
   return (
-    <motion.div 
+    <motion.div
       variants={container}
       initial="hidden"
       animate="show"
@@ -67,10 +73,7 @@ export function BadgeList({ badges, onShare, isLoading }: BadgeListProps) {
     >
       {badges.map((badge) => (
         <motion.div key={badge.pda} variants={item}>
-            <BadgeCard
-            badge={badge}
-            onShare={onShare}
-            />
+          <BadgeCard badge={badge} onShare={onShare} />
         </motion.div>
       ))}
     </motion.div>

@@ -75,14 +75,14 @@ function loadMintFromEnv(): Address {
 
 async function loadKeypair(file: string): Promise<KeyPairSigner> {
   return createKeyPairSignerFromBytes(
-    new Uint8Array(JSON.parse(readFileSync(file, "utf8"))),
+    new Uint8Array(JSON.parse(readFileSync(file, "utf8")))
   );
 }
 
 async function sendTx(
   feePayer: KeyPairSigner,
   ixs: Instruction[],
-  commitment: "confirmed" | "finalized" = "confirmed",
+  commitment: "confirmed" | "finalized" = "confirmed"
 ): Promise<Signature> {
   const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
   const signed = await pipe(
@@ -90,7 +90,7 @@ async function sendTx(
     (m) => setTransactionMessageFeePayerSigner(feePayer, m),
     (m) => appendTransactionMessageInstructions(ixs, m),
     (m) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-    signTransactionMessageWithSigners,
+    signTransactionMessageWithSigners
   );
   assertIsTransactionWithBlockhashLifetime(signed);
   // Envío raw + polling: los websockets del RPC público de devnet se cuelgan.
@@ -116,19 +116,26 @@ async function ata(mint: Address, owner: Address): Promise<Address> {
 
 async function sha256(text: string): Promise<Uint8Array> {
   return new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)),
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text))
   );
 }
 
 const explorer = {
-  address: (a: string) => `https://explorer.solana.com/address/${a}?cluster=devnet`,
+  address: (a: string) =>
+    `https://explorer.solana.com/address/${a}?cluster=devnet`,
   tx: (s: string) => `https://explorer.solana.com/tx/${s}?cluster=devnet`,
 };
 
 async function main() {
-  const admin = await loadKeypair(path.join(homedir(), ".config/solana/id.json"));
-  const client = await loadKeypair(path.join(homedir(), ".repulink/demo-client.json"));
-  const freelancer = await loadKeypair(path.join(homedir(), ".repulink/demo-freelancer.json"));
+  const admin = await loadKeypair(
+    path.join(homedir(), ".config/solana/id.json")
+  );
+  const client = await loadKeypair(
+    path.join(homedir(), ".repulink/demo-client.json")
+  );
+  const freelancer = await loadKeypair(
+    path.join(homedir(), ".repulink/demo-freelancer.json")
+  );
   const mint = loadMintFromEnv();
   console.log(`admin      ${admin.address}`);
   console.log(`client     ${client.address}`);
@@ -136,7 +143,8 @@ async function main() {
   console.log(`mint       ${mint}`);
 
   const config = await fetchMaybeConfig(rpc, await deriveConfigPda());
-  if (!config.exists) throw new Error("Config no existe en devnet — corre init_config primero");
+  if (!config.exists)
+    throw new Error("Config no existe en devnet — corre init_config primero");
   const treasury = config.data.treasury;
   console.log(`arbiter    ${config.data.arbiter} (Config on-chain)`);
   console.log(`treasury   ${treasury} (Config on-chain)`);
@@ -151,7 +159,11 @@ async function main() {
     const { value: balance } = await rpc.getBalance(wallet.address).send();
     if (balance < sol(min)) {
       topUps.push(
-        getTransferSolInstruction({ source: admin, destination: wallet.address, amount: sol(amount) }),
+        getTransferSolInstruction({
+          source: admin,
+          destination: wallet.address,
+          amount: sol(amount),
+        })
       );
     }
   }
@@ -164,10 +176,12 @@ async function main() {
   const { value: mintInfo } = await rpc
     .getAccountInfo(mint, { encoding: "jsonParsed" })
     .send();
-  const parsed = mintInfo?.data as { parsed?: { info?: { mintAuthority?: string } } };
+  const parsed = mintInfo?.data as {
+    parsed?: { info?: { mintAuthority?: string } };
+  };
   if (parsed?.parsed?.info?.mintAuthority !== admin.address) {
     throw new Error(
-      `el admin no es mint authority de ${mint} — fondea manualmente el ATA del client (${client.address})`,
+      `el admin no es mint authority de ${mint} — fondea manualmente el ATA del client (${client.address})`
     );
   }
   const clientToken = await ata(mint, client.address);
@@ -189,9 +203,24 @@ async function main() {
   // ── Los 3 jobs del demo ───────────────────────────────────────────────────
   const baseJobId = BigInt(Date.now());
   const jobs = [
-    { name: "Funded", jobId: baseJobId, amount: 150_000_000n, brief: "Landing page para lanzamiento de producto" },
-    { name: "Delivered", jobId: baseJobId + 1n, amount: 250_000_000n, brief: "Integración de pasarela de pagos" },
-    { name: "Released", jobId: baseJobId + 2n, amount: 100_000_000n, brief: "Auditoría de smart contract" },
+    {
+      name: "Funded",
+      jobId: baseJobId,
+      amount: 150_000_000n,
+      brief: "Landing page para lanzamiento de producto",
+    },
+    {
+      name: "Delivered",
+      jobId: baseJobId + 1n,
+      amount: 250_000_000n,
+      brief: "Integración de pasarela de pagos",
+    },
+    {
+      name: "Released",
+      jobId: baseJobId + 2n,
+      amount: 100_000_000n,
+      brief: "Auditoría de smart contract",
+    },
   ] as const;
 
   const results: { name: string; job: Address }[] = [];
@@ -215,7 +244,7 @@ async function main() {
         }),
         await getFundJobInstructionAsync({ client, job, mint, clientToken }),
       ],
-      "finalized",
+      "finalized"
     );
     console.log(`  create_job+fund_job: ${explorer.tx(sig)}`);
 
@@ -224,7 +253,9 @@ async function main() {
         getMarkDeliveredInstruction({
           freelancer,
           job,
-          deliveryHash: await sha256(`https://github.com/repulink-demo/entrega-${jobId}`),
+          deliveryHash: await sha256(
+            `https://github.com/repulink-demo/entrega-${jobId}`
+          ),
         }),
       ]);
       console.log(`  mark_delivered: ${explorer.tx(sig)}`);
@@ -254,7 +285,7 @@ async function main() {
             treasuryToken,
           }),
         ],
-        "finalized",
+        "finalized"
       );
       console.log(`  approve_release: ${explorer.tx(sig)}`);
     }
@@ -262,7 +293,9 @@ async function main() {
     const after = await fetchJob(rpc, job);
     const expected = JobState[name as keyof typeof JobState];
     if (after.data.state !== expected) {
-      throw new Error(`job ${name}: estado ${JobState[after.data.state]}, esperaba ${name}`);
+      throw new Error(
+        `job ${name}: estado ${JobState[after.data.state]}, esperaba ${name}`
+      );
     }
     console.log(`  ✔ estado = ${name}`);
     results.push({ name, job });

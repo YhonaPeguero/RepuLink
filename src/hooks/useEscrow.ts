@@ -43,7 +43,10 @@ import { sha256Utf8 } from "../lib/usdc";
 
 /** Error de acción con el error original preservado para inspección. */
 export class EscrowActionError extends Error {
-  constructor(message: string, public readonly original: unknown) {
+  constructor(
+    message: string,
+    public readonly original: unknown
+  ) {
     super(message);
     this.name = "EscrowActionError";
   }
@@ -126,7 +129,7 @@ export function useEscrow() {
   /** Mutex síncrono: se adquiere antes del primer await de cualquier acción,
    * así dos clicks/submits solapados no pueden enviar dos transacciones. */
   const runExclusive = useCallback(
-    async <T,>(fn: () => Promise<T>): Promise<T> => {
+    async <T>(fn: () => Promise<T>): Promise<T> => {
       if (lockRef.current) {
         throw new Error("Another action is already in progress");
       }
@@ -139,7 +142,7 @@ export function useEscrow() {
         setStage("idle");
       }
     },
-    [],
+    []
   );
 
   const requireSigner = useCallback((): {
@@ -156,7 +159,7 @@ export function useEscrow() {
     async (
       instructions: Instruction[],
       commitment: "confirmed" | "finalized",
-      onSent?: (signature: Signature) => void,
+      onSent?: (signature: Signature) => void
     ): Promise<Signature> => {
       setStage("sending");
       try {
@@ -169,7 +172,7 @@ export function useEscrow() {
         throw new EscrowActionError(mapEscrowError(err), err);
       }
     },
-    [send, rpc],
+    [send, rpc]
   );
 
   /** Job fresco de la red (Task 3.3: refetch antes de derivar/enviar). */
@@ -178,7 +181,7 @@ export function useEscrow() {
       const job = await fetchJob(rpc, jobAddress);
       return job.data;
     },
-    [rpc],
+    [rpc]
   );
 
   // ── Crear + fondear (una sola transacción, atómico) ──────────────────────
@@ -198,7 +201,10 @@ export function useEscrow() {
         // (timeout post-envío), resolverlo antes de crear nada nuevo.
         const pending = loadPendingCreate(addr);
         if (pending) {
-          const existing = await fetchMaybeJob(rpc, address(pending.jobAddress));
+          const existing = await fetchMaybeJob(
+            rpc,
+            address(pending.jobAddress)
+          );
           if (existing.exists) {
             clearPendingCreate(addr);
             return {
@@ -245,7 +251,7 @@ export function useEscrow() {
                 jobId: jobId.toString(),
                 jobAddress,
                 signature: sig,
-              }),
+              })
           );
           clearPendingCreate(addr);
           return { jobAddress, signature };
@@ -262,101 +268,104 @@ export function useEscrow() {
           throw err;
         }
       }),
-    [requireSigner, rpc, sendAndAwait, runExclusive],
+    [requireSigner, rpc, sendAndAwait, runExclusive]
   );
 
   // ── Freelancer entrega ────────────────────────────────────────────────────
   const markDelivered = useCallback(
     (jobAddress: Address, deliveryRef: string): Promise<Signature> =>
       runExclusive(async () => {
-      const { signer } = requireSigner();
-      if (!deliveryRef.trim()) {
-        throw new Error("Provide the delivery reference (URL or description)");
-      }
-      const deliveryHash = await sha256Utf8(deliveryRef);
-      const ix = getMarkDeliveredInstruction({
-        freelancer: signer,
-        job: jobAddress,
-        deliveryHash,
-      });
-      return sendAndAwait([ix], "confirmed");
+        const { signer } = requireSigner();
+        if (!deliveryRef.trim()) {
+          throw new Error(
+            "Provide the delivery reference (URL or description)"
+          );
+        }
+        const deliveryHash = await sha256Utf8(deliveryRef);
+        const ix = getMarkDeliveredInstruction({
+          freelancer: signer,
+          job: jobAddress,
+          deliveryHash,
+        });
+        return sendAndAwait([ix], "confirmed");
       }),
-    [requireSigner, sendAndAwait, runExclusive],
+    [requireSigner, sendAndAwait, runExclusive]
   );
 
   // ── Payout compartido: release / claim timeout ────────────────────────────
   const releaseWith = useCallback(
     (
       jobAddress: Address,
-      build: typeof getApproveReleaseInstructionAsync,
+      build: typeof getApproveReleaseInstructionAsync
     ): Promise<Signature> =>
       runExclusive(async () => {
-      const { signer } = requireSigner();
-      const job = await freshJob(jobAddress);
-      const config = await fetchConfig(rpc, await deriveConfigPda());
+        const { signer } = requireSigner();
+        const job = await freshJob(jobAddress);
+        const config = await fetchConfig(rpc, await deriveConfigPda());
 
-      const freelancerToken = await ata(job.mint, job.freelancer);
-      const treasuryToken = await ata(job.mint, config.data.treasury);
+        const freelancerToken = await ata(job.mint, job.freelancer);
+        const treasuryToken = await ata(job.mint, config.data.treasury);
 
-      const ensureAtas = await Promise.all([
-        getCreateAssociatedTokenIdempotentInstructionAsync({
-          payer: signer,
-          owner: job.freelancer,
+        const ensureAtas = await Promise.all([
+          getCreateAssociatedTokenIdempotentInstructionAsync({
+            payer: signer,
+            owner: job.freelancer,
+            mint: job.mint,
+          }),
+          getCreateAssociatedTokenIdempotentInstructionAsync({
+            payer: signer,
+            owner: config.data.treasury,
+            mint: job.mint,
+          }),
+        ]);
+
+        const ix = await build({
+          signer,
+          job: jobAddress,
           mint: job.mint,
-        }),
-        getCreateAssociatedTokenIdempotentInstructionAsync({
-          payer: signer,
-          owner: config.data.treasury,
-          mint: job.mint,
-        }),
-      ]);
-
-      const ix = await build({
-        signer,
-        job: jobAddress,
-        mint: job.mint,
-        freelancerToken,
-        treasuryToken,
-      });
-      return sendAndAwait([...ensureAtas, ix], "finalized");
+          freelancerToken,
+          treasuryToken,
+        });
+        return sendAndAwait([...ensureAtas, ix], "finalized");
       }),
-    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive],
+    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive]
   );
 
   const approveRelease = useCallback(
     (jobAddress: Address) =>
       releaseWith(jobAddress, getApproveReleaseInstructionAsync),
-    [releaseWith],
+    [releaseWith]
   );
 
   const claimTimeout = useCallback(
     (jobAddress: Address) =>
       releaseWith(jobAddress, getClaimTimeoutInstructionAsync),
-    [releaseWith],
+    [releaseWith]
   );
 
   // ── Client cancela / reembolso ────────────────────────────────────────────
   const cancelRefund = useCallback(
     (jobAddress: Address): Promise<Signature> =>
       runExclusive(async () => {
-      const { signer } = requireSigner();
-      const job = await freshJob(jobAddress);
-      const clientToken = await ata(job.mint, job.client);
+        const { signer } = requireSigner();
+        const job = await freshJob(jobAddress);
+        const clientToken = await ata(job.mint, job.client);
 
-      const ensureAta = await getCreateAssociatedTokenIdempotentInstructionAsync({
-        payer: signer,
-        owner: job.client,
-        mint: job.mint,
-      });
-      const ix = await getCancelRefundInstructionAsync({
-        client: signer,
-        job: jobAddress,
-        mint: job.mint,
-        clientToken,
-      });
-      return sendAndAwait([ensureAta, ix], "finalized");
+        const ensureAta =
+          await getCreateAssociatedTokenIdempotentInstructionAsync({
+            payer: signer,
+            owner: job.client,
+            mint: job.mint,
+          });
+        const ix = await getCancelRefundInstructionAsync({
+          client: signer,
+          job: jobAddress,
+          mint: job.mint,
+          clientToken,
+        });
+        return sendAndAwait([ensureAta, ix], "finalized");
       }),
-    [requireSigner, freshJob, sendAndAwait, runExclusive],
+    [requireSigner, freshJob, sendAndAwait, runExclusive]
   );
 
   // ── Disputas ──────────────────────────────────────────────────────────────
@@ -367,46 +376,45 @@ export function useEscrow() {
         const ix = getOpenDisputeInstruction({ signer, job: jobAddress });
         return sendAndAwait([ix], "confirmed");
       }),
-    [requireSigner, sendAndAwait, runExclusive],
+    [requireSigner, sendAndAwait, runExclusive]
   );
 
   const resolveDispute = useCallback(
-    (
-      jobAddress: Address,
-      freelancerAmount: bigint,
-    ): Promise<Signature> =>
+    (jobAddress: Address, freelancerAmount: bigint): Promise<Signature> =>
       runExclusive(async () => {
-      const { signer } = requireSigner();
-      const job = await freshJob(jobAddress);
-      const config = await fetchConfig(rpc, await deriveConfigPda());
+        const { signer } = requireSigner();
+        const job = await freshJob(jobAddress);
+        const config = await fetchConfig(rpc, await deriveConfigPda());
 
-      const [freelancerToken, clientToken, treasuryToken] = await Promise.all([
-        ata(job.mint, job.freelancer),
-        ata(job.mint, job.client),
-        ata(job.mint, config.data.treasury),
-      ]);
-      const ensureAtas = await Promise.all(
-        [job.freelancer, job.client, config.data.treasury].map((owner) =>
-          getCreateAssociatedTokenIdempotentInstructionAsync({
-            payer: signer,
-            owner,
-            mint: job.mint,
-          }),
-        ),
-      );
+        const [freelancerToken, clientToken, treasuryToken] = await Promise.all(
+          [
+            ata(job.mint, job.freelancer),
+            ata(job.mint, job.client),
+            ata(job.mint, config.data.treasury),
+          ]
+        );
+        const ensureAtas = await Promise.all(
+          [job.freelancer, job.client, config.data.treasury].map((owner) =>
+            getCreateAssociatedTokenIdempotentInstructionAsync({
+              payer: signer,
+              owner,
+              mint: job.mint,
+            })
+          )
+        );
 
-      const ix = await getResolveDisputeInstructionAsync({
-        arbiter: signer,
-        job: jobAddress,
-        mint: job.mint,
-        freelancerToken,
-        clientToken,
-        treasuryToken,
-        freelancerAmount,
-      });
-      return sendAndAwait([...ensureAtas, ix], "finalized");
+        const ix = await getResolveDisputeInstructionAsync({
+          arbiter: signer,
+          job: jobAddress,
+          mint: job.mint,
+          freelancerToken,
+          clientToken,
+          treasuryToken,
+          freelancerAmount,
+        });
+        return sendAndAwait([...ensureAtas, ix], "finalized");
       }),
-    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive],
+    [requireSigner, freshJob, rpc, sendAndAwait, runExclusive]
   );
 
   return {

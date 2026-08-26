@@ -79,7 +79,7 @@ export function useOnChainData(walletAddress: Address | undefined) {
               badgeCount: maybeProfile.data.badgeCount,
               bump: maybeProfile.data.bump,
             }
-          : null,
+          : null
       );
 
       // ── Badges: getProgramAccounts + decoder generado ──────────────────
@@ -91,7 +91,7 @@ export function useOnChainData(walletAddress: Address | undefined) {
               memcmp: {
                 offset: 0n,
                 bytes: getBase58Decoder().decode(
-                  BADGE_DISCRIMINATOR,
+                  BADGE_DISCRIMINATOR
                 ) as Base58EncodedBytes,
                 encoding: "base58",
               },
@@ -110,15 +110,21 @@ export function useOnChainData(walletAddress: Address | undefined) {
       const badgeDecoder = getBadgeDecoder();
       const base64 = getBase64Encoder();
       const parsedBadges: BadgeWithPda[] = accounts
-        .map(({ pubkey, account }): BadgeWithPda => ({
-          pda: pubkey as string,
-          account: toUiBadge(badgeDecoder.decode(base64.encode(account.data[0]))),
-        }))
+        .map(
+          ({ pubkey, account }): BadgeWithPda => ({
+            pda: pubkey as string,
+            account: toUiBadge(
+              badgeDecoder.decode(base64.encode(account.data[0]))
+            ),
+          })
+        )
         .sort((a, b) => a.account.badgeIndex - b.account.badgeIndex);
 
       setBadges(parsedBadges);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch on-chain data");
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch on-chain data"
+      );
     } finally {
       setIsLoading(false);
     }

@@ -1,14 +1,122 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background-color: #08080a; color-scheme: dark">
   <head>
     <meta charset="UTF-8" />
-    <title>RepuLink</title>
+    <title>RepuLink — Escrow and verifiable work history on Solana</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="The client locks payment in a program-owned vault before work starts. The freelancer delivers, funds are released on-chain, and the settled job becomes a verifiable track record no platform owns. Solana devnet preview."
+    />
     <link rel="icon" type="image/png" href="/logo-repulink.png" />
     <link rel="apple-touch-icon" href="/logo-repulink.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="RepuLink — Escrow on Solana" />
+    <meta
+      property="og:description"
+      content="Escrow for freelance work on Solana, with a portable reputation trail. Devnet preview."
+    />
+    <meta property="og:image" content="/logo-repulink.png" />
+    <meta name="twitter:card" content="summary" />
+    <style>
+      /* Crítico e inline a propósito: se aplica en el primer paint, antes de
+         que Vite inyecte la hoja de estilos. Evita el flash blanco al recargar
+         y al navegar en frío. */
+      html,
+      body {
+        margin: 0;
+        background-color: #08080a;
+        color: #fff;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Velo de arranque: se desvanece cuando React monta y añade .app-ready
+         al <html>. Evita el salto de layout sin contenido. */
+      #boot {
+        position: fixed;
+        inset: 0;
+        background: #08080a;
+        opacity: 1;
+        transition: opacity 260ms ease-out;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      html.app-ready #boot {
+        opacity: 0;
+      }
+      #boot-error {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        place-content: center;
+        padding: 2rem;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        color: #a1a1aa;
+        background: #08080a;
+        text-align: center;
+      }
+      html.boot-failed #boot-error {
+        display: grid;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot"></div>
+    <div id="boot-error">
+      <div>
+        <p style="color: #fff; font-weight: 700; margin: 0 0 0.5rem">
+          RepuLink no pudo arrancar
+        </p>
+        <p style="margin: 0 0 1rem">
+          Recarga la página. Si vuelve a fallar, la consola del navegador dice
+          por qué: lo más habitual es que falte la configuración de entorno.
+        </p>
+        <button
+          onclick="location.reload()"
+          style="
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #141416;
+            color: #fff;
+            cursor: pointer;
+          "
+        >
+          Recargar
+        </button>
+      </div>
+    </div>
+    <script>
+      // El velo nunca debe sobrevivir al arranque. Si React monta, main.tsx
+      // añade .app-ready. Si algo falla antes (un throw en tiempo de import),
+      // este temporizador lo retira igualmente y enseña el motivo, en vez de
+      // dejar una pantalla negra dando vueltas.
+      (function () {
+        var html = document.documentElement;
+        function reveal() {
+          html.classList.add("app-ready");
+        }
+        window.addEventListener("load", function () {
+          setTimeout(reveal, 50);
+        });
+        setTimeout(function () {
+          reveal();
+          var root = document.getElementById("root");
+          if (!root || root.childElementCount === 0) {
+            html.classList.add("boot-failed");
+          }
+        }, 2500);
+        window.addEventListener("error", function () {
+          reveal();
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -20,8 +20,7 @@ const HUMAN_MESSAGES: Partial<Record<number, string>> = {
     "The review window has not elapsed yet; you cannot claim the payout.",
   [REPULINK_ERROR__SELF_DEALING_NOT_ALLOWED]:
     "The freelancer cannot be your own wallet.",
-  [REPULINK_ERROR__INVALID_AMOUNT]:
-    "The amount is not valid for this action.",
+  [REPULINK_ERROR__INVALID_AMOUNT]: "The amount is not valid for this action.",
   [REPULINK_ERROR__INVALID_REVIEW_WINDOW]:
     "The review window must be between 1 and 30 days.",
   [REPULINK_ERROR__FEE_TOO_HIGH]:
@@ -54,12 +53,17 @@ function findCustomErrorCode(err: unknown): number | null {
   while (current && !seen.has(current)) {
     seen.add(current);
     if (typeof current === "object") {
-      const txErr = (current as { transactionError?: unknown }).transactionError;
+      const txErr = (current as { transactionError?: unknown })
+        .transactionError;
       const structured = customCodeFromTransactionError(txErr);
       if (structured !== null) return structured;
 
       const ctx = (current as { context?: { code?: unknown } }).context;
-      if (ctx && typeof ctx.code === "number" && ctx.code >= ANCHOR_CUSTOM_ERROR_BASE) {
+      if (
+        ctx &&
+        typeof ctx.code === "number" &&
+        ctx.code >= ANCHOR_CUSTOM_ERROR_BASE
+      ) {
         return ctx.code;
       }
       const msg = (current as { message?: unknown }).message;

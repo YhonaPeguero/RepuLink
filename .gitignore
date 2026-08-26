@@ -36,3 +36,9 @@ lerna-debug.log*
 id*.json
 .repulink/
 scripts/.keys/
+
+# Orquestación local (Orca)
+.orca/
+
+# Artefacto incremental de TypeScript
+tsconfig.tsbuildinfo
