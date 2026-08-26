@@ -1,5 +1,6 @@
 import solflareLogo from "../../assets/solflare-logo.jpg";
 import backpackLogo from "../../assets/backpack-logo.jpg";
+import jupiterLogo from "../../assets/jupiter-logo.jpg";
 
 /**
  * Marcas de las wallets de Solana más habituales.
@@ -51,8 +52,19 @@ export function BackpackMark({
   );
 }
 
+export function JupiterMark({ className = "h-6 w-6" }: { className?: string }) {
+  return (
+    <img
+      src={jupiterLogo}
+      alt=""
+      className={`${className} rounded-md object-cover`}
+    />
+  );
+}
+
 export const WALLET_MARKS = {
   Phantom: PhantomMark,
   Solflare: SolflareMark,
   Backpack: BackpackMark,
+  Jupiter: JupiterMark,
 } as const;

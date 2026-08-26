@@ -19,6 +19,10 @@ const KNOWN = [
   { name: "Phantom", url: "https://phantom.app/" },
   { name: "Solflare", url: "https://solflare.com/" },
   { name: "Backpack", url: "https://backpack.app/" },
+  {
+    name: "Jupiter",
+    url: "https://chromewebstore.google.com/detail/jupiter-wallet/iledlaeogohbilgbfhmbgkgmpplbfboh",
+  },
 ] as const;
 
 export function WalletStrip({ compact = false }: { compact?: boolean }) {
