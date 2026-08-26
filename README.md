@@ -1,23 +1,33 @@
 # RepuLink
 
-> **Escrow for freelance work on Solana, with a portable reputation trail.**
-> A client locks funds in a program-owned vault, the freelancer delivers, and the
-> funds are released against an on-chain state machine. A job that is delivered
-> and released can be attested through the Solana Attestation Service, so the
-> freelancer keeps a verifiable track record that no platform owns.
+> **Verifiable reputation from real agreements between two parties, on Solana.**
+> The payer locks funds in a program-owned vault, the worker delivers, and the
+> funds are released against an on-chain state machine. An agreement that is
+> delivered and released can be attested through the Solana Attestation Service,
+> so the track record belongs to a wallet instead of to a platform.
 
 Built on **Solana** · Submitted to **WayLearn x Solana Foundation Hackathon 2026**
 
+![The RepuLink dashboard and job lifecycle running on devnet](./src/assets/newUI-RepuLink.png)
+
 ## Who this is for
 
-Freelancers and clients who are **already crypto-native** — people invoicing
-DAOs, protocols and web3 projects in stablecoins today. That is the segment
-where the problem is felt and where the product can be used without hand-holding:
-it needs a browser wallet and an SPL token, and there is no fiat onramp,
-no custody and no embedded wallet yet.
+Any two parties who agree on a deliverable and a price and need the outcome to be
+provable: freelancers invoicing DAOs and protocols, but also agencies, bounty
+programs, and grant milestones. The common thread is not a job title, it is the
+**shape of the deal** — two parties, one deliverable, and money that should not
+move until the work does.
 
-It is deliberately **not** aimed at the general freelancer market. See
+They also have to be **already crypto-native**. It needs a browser wallet and an
+SPL token; there is no fiat onramp, no custody and no embedded wallet yet, so it
+is deliberately not aimed at anyone who needs those. See
 [`docs/gtm.md`](./docs/gtm.md).
+
+> **On naming.** The marketing surface says **payer** and **worker**, because the
+> product is not only for freelancing. The rest of this document, the program and
+> the job view say **client**, **freelancer** and **arbiter**, because those are
+> the real role names on the `Job` account — whoever signs a transaction needs to
+> read them exactly as they are on-chain.
 
 **Live demo:** [repu-link.vercel.app](https://repu-link.vercel.app)
 
@@ -46,14 +56,14 @@ to read them, and they are listed in the dashboard:
 
 ## Why
 
-Freelancers get paid on trust: either they work first and hope the client pays,
-or the client pays first and hopes the work arrives. Platforms solve this with
-custodial escrow, and charge for it — and the reputation you build stays locked
-inside the platform.
+Work between two parties gets paid on trust: either the work comes first and the
+payer might not pay, or the money comes first and the work might not arrive.
+Platforms solve this with custodial escrow, charge for it, and keep the
+reputation you build locked inside.
 
 RepuLink puts the escrow in a program and the reputation in an attestation.
-Neither party custodies the other's money, and the outcome of every job is a
-public, verifiable record tied to the freelancer's wallet.
+Neither party custodies the other's money, and the outcome of every agreement is
+a public, verifiable record tied to a wallet.
 
 ---
 
