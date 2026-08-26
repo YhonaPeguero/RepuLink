@@ -119,7 +119,7 @@ export function Companion() {
           }
         }}
         aria-label="Show the guide"
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full border border-border-low bg-[#0c0c10] py-1.5 pl-1.5 pr-4 shadow-[0_10px_30px_-10px_rgba(153,69,255,0.7)] transition-[transform,opacity] duration-[--dur-micro] hover:-translate-y-px hover:opacity-95"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full border border-border-low bg-[#0c0c10] py-1.5 pl-1.5 pr-4 shadow-[0_10px_24px_-16px_rgba(0,0,0,0.9),0_8px_26px_-14px_var(--brand-halo)] transition-[transform,opacity] duration-[--dur-micro] hover:-translate-y-px hover:opacity-95"
         style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
       >
         {/* Flotación lenta: viva sin llamar la atención a gritos */}
