@@ -268,9 +268,13 @@ function RailButton({
     <button
       onClick={onClick}
       aria-label={side === "left" ? "Scroll left" : "Scroll right"}
+      // Un botón invisible no debe recibir foco: sacarlo del tab order evita
+      // que un usuario de teclado aterrice en un control que no ve.
+      tabIndex={hidden ? -1 : 0}
+      aria-hidden={hidden}
       className={`absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border-low bg-background/90 text-muted backdrop-blur transition-all duration-[--dur-fast] hover:border-primary/40 hover:text-white ${
         side === "left" ? "-left-2" : "-right-2"
-      } ${hidden ? "pointer-events-none opacity-0" : "opacity-0 group-hover/rail:opacity-100"}`}
+      } ${hidden ? "pointer-events-none opacity-0" : "opacity-0 focus-visible:opacity-100 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100"}`}
     >
       <svg
         viewBox="0 0 24 24"

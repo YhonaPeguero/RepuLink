@@ -16,9 +16,9 @@ import { PartyAvatar } from "../brand/PartyAvatar";
 
 const PHASES = [
   { key: "fund", label: "Payer funds the vault", ms: 2100 },
-  { key: "hold", label: "Locked. Neither side can touch it", ms: 2000 },
+  { key: "hold", label: "Locked in the job vault", ms: 2000 },
   { key: "deliver", label: "Work is delivered", ms: 1900 },
-  { key: "release", label: "Released, and attested", ms: 2600 },
+  { key: "release", label: "Released. An attestation can follow", ms: 2600 },
 ] as const;
 
 type Phase = (typeof PHASES)[number]["key"];
@@ -132,15 +132,17 @@ export function EscrowFlow() {
             initial={false}
             animate={
               released
-                ? { scale: 1, opacity: 1, rotate: 0 }
+                ? { scale: 1, opacity: 0.85, rotate: 0 }
                 : { scale: 0.4, opacity: 0, rotate: -25 }
             }
+            // Entra tarde y a media opacidad a propósito: la atestación es una
+            // transacción manual posterior, no parte de la liberación.
             transition={{
               duration: 0.5,
               ease: [0.34, 1.4, 0.64, 1],
-              delay: released ? 0.5 : 0,
+              delay: released ? 1.3 : 0,
             }}
-            className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full border border-state-done/40 bg-background"
+            className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-state-done/50 bg-background"
           >
             <ShieldCheck className="h-4 w-4 text-state-done" />
           </motion.div>

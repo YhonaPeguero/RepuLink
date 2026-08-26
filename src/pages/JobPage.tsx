@@ -248,7 +248,10 @@ export function JobPage() {
 
         {/* Dónde está este acuerdo — la firma del producto */}
         <section className="rounded-2xl border border-border-low bg-elev-1 px-6 py-7 sm:px-8">
-          <LifecycleRail state={job.state} />
+          <LifecycleRail
+            state={job.state}
+            progress={{ fundedAt: job.fundedAt, deliveredAt: job.deliveredAt }}
+          />
         </section>
 
         {/* El dinero, primero */}

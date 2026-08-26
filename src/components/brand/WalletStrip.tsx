@@ -82,7 +82,8 @@ export function WalletStrip({ compact = false }: { compact?: boolean }) {
           <button
             key={c.id}
             onClick={() => connect(c.id)}
-            className="flex items-center gap-2 rounded-xl border border-border-low bg-elev-1 py-2 pl-2 pr-3.5 text-sm font-semibold text-white transition-all duration-[--dur-micro] hover:-translate-y-px hover:border-primary/40"
+            disabled={status === "connecting"}
+            className="flex items-center gap-2 rounded-xl border border-border-low bg-elev-1 py-2 pl-2 pr-3.5 text-sm font-semibold text-white transition-all duration-[--dur-micro] hover:-translate-y-px hover:border-primary/40 disabled:opacity-50"
           >
             <img
               src={c.icon}

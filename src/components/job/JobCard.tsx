@@ -21,7 +21,13 @@ export function JobCard({ job }: { job: MyJob }) {
     >
       <div className="min-w-0 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <LifecycleDots state={job.account.state} />
+          <LifecycleDots
+            state={job.account.state}
+            progress={{
+              fundedAt: job.account.fundedAt,
+              deliveredAt: job.account.deliveredAt,
+            }}
+          />
           <span
             className={`text-[10px] font-bold uppercase tracking-wider ${meta.className.split(" ")[0]}`}
           >

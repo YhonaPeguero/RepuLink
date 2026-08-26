@@ -75,14 +75,30 @@ export const DETOURS: Partial<
   },
 };
 
+/** Marcas de tiempo que prueban hasta dónde llegó realmente un acuerdo. */
+export type JobProgress = { fundedAt?: bigint; deliveredAt?: bigint };
+
 /**
- * Índice alcanzado en el camino feliz. Los estados de desvío se mapean al punto
- * donde el job se salió del rail: `Refunded` solo puede venir de `Created` o
- * `Funded`, y `Disputed`/`Resolved` como muy tarde de `Delivered`.
+ * Índice alcanzado en el camino feliz.
+ *
+ * Para los estados de desvío NO se puede deducir del estado a secas, porque el
+ * programa admite salir del rail desde dos puntos distintos:
+ *   · `cancel_refund` acepta `Created` o `Funded`
+ *   · `open_dispute` acepta `Funded` o `Delivered`
+ *
+ * Un `Refunded` con `funded_at = 0` nunca llegó a Funded, y un `Resolved` con
+ * `delivered_at = 0` nunca llegó a Delivered. Asumir el máximo pintaba pasos
+ * que no ocurrieron, que es justo la sobreafirmación que este producto no
+ * puede permitirse. Sin marcas de tiempo se devuelve el mínimo, nunca el máximo.
  */
-export function reachedIndex(state: JobState): number {
+export function reachedIndex(state: JobState, progress?: JobProgress): number {
   const direct = HAPPY_ORDER.indexOf(state);
   if (direct !== -1) return direct;
-  if (state === JobState.Refunded) return 1;
-  return 2;
+
+  const funded = (progress?.fundedAt ?? 0n) > 0n;
+  const delivered = (progress?.deliveredAt ?? 0n) > 0n;
+
+  if (state === JobState.Refunded) return funded ? 1 : 0;
+  // Disputed | Resolved
+  return delivered ? 2 : funded ? 1 : 0;
 }

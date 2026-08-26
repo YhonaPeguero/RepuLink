@@ -1,6 +1,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { JobState } from "../../generated/repulink/types/jobState";
-import { HAPPY_PATH, reachedIndex, DETOURS } from "../../lib/job-state";
+import {
+  HAPPY_PATH,
+  reachedIndex,
+  DETOURS,
+  type JobProgress,
+} from "../../lib/job-state";
 
 /**
  * El ciclo de vida del escrow, dibujado.
@@ -23,15 +28,18 @@ const DOT_TONE: Record<"done" | "current" | "todo", string> = {
 
 export function LifecycleRail({
   state,
+  progress,
   className = "",
   animate = true,
 }: {
   state: JobState;
+  /** Marcas de tiempo del Job. Sin ellas, un desvío se dibuja conservador. */
+  progress?: JobProgress;
   className?: string;
   animate?: boolean;
 }) {
   const reduced = useReducedMotion();
-  const reached = reachedIndex(state);
+  const reached = reachedIndex(state, progress);
   const detour = DETOURS[state];
   const isTerminal =
     state === JobState.Released ||
@@ -39,7 +47,7 @@ export function LifecycleRail({
     state === JobState.Refunded;
 
   // Cuánto del rail está recorrido, de 0 a 1.
-  const progress = reached / (HAPPY_PATH.length - 1);
+  const fillRatio = reached / (HAPPY_PATH.length - 1);
   const shouldAnimate = animate && !reduced;
 
   return (
@@ -51,7 +59,7 @@ export function LifecycleRail({
         <motion.div
           className="absolute left-0 top-[7px] h-px origin-left bg-gradient-to-r from-state-funded to-state-done"
           initial={shouldAnimate ? { scaleX: 0 } : false}
-          animate={{ scaleX: progress }}
+          animate={{ scaleX: fillRatio }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
           style={{ right: 0 }}
         />
@@ -104,8 +112,14 @@ export function LifecycleRail({
 }
 
 /** Versión mínima para las tarjetas del listado: solo los puntos. */
-export function LifecycleDots({ state }: { state: JobState }) {
-  const reached = reachedIndex(state);
+export function LifecycleDots({
+  state,
+  progress,
+}: {
+  state: JobState;
+  progress?: JobProgress;
+}) {
+  const reached = reachedIndex(state, progress);
   const alert = state === JobState.Disputed;
   return (
     <div className="flex items-center gap-1" aria-hidden>
