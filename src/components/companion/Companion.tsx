@@ -11,6 +11,8 @@ import {
   type TopicKey,
 } from "../../lib/companion-context";
 import { useCompanion } from "./useCompanion";
+import { CompanionAvatar } from "./CompanionAvatar";
+import { CompanionWelcome } from "./CompanionWelcome";
 
 /**
  * Guía contextual de RepuLink.
@@ -24,40 +26,34 @@ import { useCompanion } from "./useCompanion";
  * Sus acciones son navegar o abrir una explicación, nada más.
  */
 
-const TONE: Record<string, { bar: string; dot: string; glow: string }> = {
-  brand: {
-    bar: "bg-primary",
-    dot: "bg-primary",
-    glow: "rgba(153,69,255,0.35)",
-  },
-  funded: {
-    bar: "bg-state-funded",
-    dot: "bg-state-funded",
-    glow: "rgba(59,130,246,0.35)",
-  },
-  active: {
-    bar: "bg-state-active",
-    dot: "bg-state-active",
-    glow: "rgba(251,191,36,0.35)",
-  },
-  done: {
-    bar: "bg-state-done",
-    dot: "bg-state-done",
-    glow: "rgba(52,211,153,0.35)",
-  },
-  idle: {
-    bar: "bg-state-idle",
-    dot: "bg-state-idle",
-    glow: "rgba(161,161,170,0.25)",
-  },
-  alert: {
-    bar: "bg-state-alert",
-    dot: "bg-state-alert",
-    glow: "rgba(248,113,113,0.35)",
-  },
+const TONE: Record<string, { bar: string; glow: string }> = {
+  brand: { bar: "bg-primary", glow: "rgba(153,69,255,0.35)" },
+  funded: { bar: "bg-state-funded", glow: "rgba(59,130,246,0.35)" },
+  active: { bar: "bg-state-active", glow: "rgba(251,191,36,0.35)" },
+  done: { bar: "bg-state-done", glow: "rgba(52,211,153,0.35)" },
+  idle: { bar: "bg-state-idle", glow: "rgba(161,161,170,0.25)" },
+  alert: { bar: "bg-state-alert", glow: "rgba(248,113,113,0.35)" },
 };
 
 const DISMISSED = "repulink:guide-dismissed";
+const SEEN_WELCOME = "repulink:guide-welcomed";
+
+function hasSeenWelcome(): boolean {
+  try {
+    return localStorage.getItem(SEEN_WELCOME) === "1";
+  } catch {
+    // Modo privado o cookies bloqueadas: mejor no insistir con la bienvenida.
+    return true;
+  }
+}
+
+function markWelcomed(): void {
+  try {
+    localStorage.setItem(SEEN_WELCOME, "1");
+  } catch {
+    /* sin persistencia; no pasa nada */
+  }
+}
 
 export function Companion() {
   const location = useLocation();
@@ -76,6 +72,10 @@ export function Companion() {
   });
   const [topic, setTopic] = useState<TopicKey | null>(null);
   const [tourStep, setTourStep] = useState<number | null>(null);
+  // La bienvenida solo tiene sentido en la portada y en la primera visita.
+  const [welcome, setWelcome] = useState(
+    () => !hasSeenWelcome() && window.location.pathname === "/"
+  );
 
   const msg = messageFor({
     pathname: location.pathname,
@@ -130,183 +130,196 @@ export function Companion() {
   const stop = inTour ? TOUR[tourStep] : null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 sm:pb-6">
-      <motion.aside
-        layout
-        initial={reduced ? false : { y: 90, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
-        style={{ boxShadow: `0 18px 50px -18px ${tone.glow}` }}
-        className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-border-low bg-background/85 backdrop-blur-2xl"
-        aria-live="polite"
-      >
-        {/* Filo de estado: el mismo color que usa el rail del acuerdo */}
-        <motion.div layout className={`h-[3px] w-full ${tone.bar}`} />
-
-        <div className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
-          <motion.span
-            layout
-            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${tone.dot}`}
-            animate={
-              reduced ? {} : { scale: [1, 1.5, 1], opacity: [1, 0.55, 1] }
-            }
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+    <>
+      <AnimatePresence>
+        {welcome && (
+          <CompanionWelcome
+            onTour={() => {
+              markWelcomed();
+              setWelcome(false);
+              setTourStep(0);
+            }}
+            onDismiss={() => {
+              markWelcomed();
+              setWelcome(false);
+            }}
           />
+        )}
+      </AnimatePresence>
 
-          <div className="min-w-0 flex-1">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={inTour ? `tour-${tourStep}` : msg.headline}
-                initial={reduced ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduced ? undefined : { opacity: 0, y: -6 }}
-                transition={{ duration: 0.28 }}
-                className="text-sm font-semibold leading-snug text-white"
-              >
-                {inTour ? stop?.say : msg.headline}
-              </motion.p>
-            </AnimatePresence>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 sm:pb-6">
+        <motion.aside
+          layout
+          initial={reduced ? false : { y: 90, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
+          style={{ boxShadow: `0 18px 50px -18px ${tone.glow}` }}
+          className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-border-low bg-background/85 backdrop-blur-2xl"
+          aria-live="polite"
+        >
+          {/* Filo de estado: el mismo color que usa el rail del acuerdo */}
+          <motion.div layout className={`h-[3px] w-full ${tone.bar}`} />
 
-            <AnimatePresence initial={false}>
-              {open && !inTour && msg.body && (
+          <div className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
+            <motion.div layout className="mt-0.5">
+              <CompanionAvatar size={34} tone={msg.tone} speaking={inTour} />
+            </motion.div>
+
+            <div className="min-w-0 flex-1">
+              <AnimatePresence mode="wait">
                 <motion.p
-                  key={msg.body}
-                  initial={reduced ? false : { opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="mt-1 overflow-hidden text-xs leading-relaxed text-muted"
+                  key={inTour ? `tour-${tourStep}` : msg.headline}
+                  initial={reduced ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduced ? undefined : { opacity: 0, y: -6 }}
+                  transition={{ duration: 0.28 }}
+                  className="text-sm font-semibold leading-snug text-white"
                 >
-                  {msg.body}
+                  {inTour ? stop?.say : msg.headline}
                 </motion.p>
-              )}
-            </AnimatePresence>
+              </AnimatePresence>
 
-            {/* Explicación desplegada */}
-            <AnimatePresence initial={false}>
-              {topic && !inTour && (
-                <motion.div
-                  key={topic}
-                  initial={reduced ? false : { opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-3 rounded-xl border border-border-low bg-elev-1 p-3.5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
-                      {TOPICS[topic].title}
-                    </p>
-                    <p className="mt-1.5 text-xs leading-relaxed text-white/85">
-                      {TOPICS[topic].body}
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <AnimatePresence initial={false}>
+                {open && !inTour && msg.body && (
+                  <motion.p
+                    key={msg.body}
+                    initial={reduced ? false : { opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="mt-1 overflow-hidden text-xs leading-relaxed text-muted"
+                  >
+                    {msg.body}
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
-            {/* Acciones */}
-            <AnimatePresence initial={false}>
-              {open && (
-                <motion.div
-                  initial={reduced ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-3 flex flex-wrap items-center gap-2"
-                >
-                  {inTour ? (
-                    <>
-                      <button
-                        onClick={() =>
-                          setTourStep((s) =>
-                            s !== null && s < TOUR.length - 1 ? s + 1 : null
-                          )
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
-                      >
-                        {tourStep < TOUR.length - 1 ? "Next" : "Finish"}
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
-                      <span className="flex items-center gap-1">
-                        {TOUR.map((_, i) => (
-                          <span
-                            key={i}
-                            className={`h-1 rounded-full transition-all duration-300 ${
-                              i === tourStep
-                                ? "w-4 bg-primary"
-                                : "w-1 bg-border-strong"
-                            }`}
-                          />
-                        ))}
-                      </span>
-                      <button
-                        onClick={() => setTourStep(null)}
-                        className="ml-auto text-xs text-muted transition-colors hover:text-white"
-                      >
-                        Exit
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {msg.actions.map((a) => (
+              {/* Explicación desplegada */}
+              <AnimatePresence initial={false}>
+                {topic && !inTour && (
+                  <motion.div
+                    key={topic}
+                    initial={reduced ? false : { opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 rounded-xl border border-border-low bg-elev-1 p-3.5">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+                        {TOPICS[topic].title}
+                      </p>
+                      <p className="mt-1.5 text-xs leading-relaxed text-white/85">
+                        {TOPICS[topic].body}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Acciones */}
+              <AnimatePresence initial={false}>
+                {open && (
+                  <motion.div
+                    initial={reduced ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-3 flex flex-wrap items-center gap-2"
+                  >
+                    {inTour ? (
+                      <>
                         <button
-                          key={a.label}
-                          onClick={() => onAction(a)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border-low bg-elev-1 px-3 py-1.5 text-xs font-semibold text-white/90 transition-all duration-[--dur-micro] hover:-translate-y-px hover:border-primary/40 hover:bg-elev-2"
-                        >
-                          {a.label}
-                          {a.kind === "navigate" && (
-                            <ArrowRight className="h-3 w-3" />
-                          )}
-                        </button>
-                      ))}
-                      {location.pathname === "/" && (
-                        <button
-                          onClick={() => setTourStep(0)}
+                          onClick={() =>
+                            setTourStep((s) =>
+                              s !== null && s < TOUR.length - 1 ? s + 1 : null
+                            )
+                          }
                           className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
                         >
-                          Start the flow
+                          {tourStep < TOUR.length - 1 ? "Next" : "Finish"}
                           <ArrowRight className="h-3 w-3" />
                         </button>
-                      )}
-                    </>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                        <span className="flex items-center gap-1">
+                          {TOUR.map((_, i) => (
+                            <span
+                              key={i}
+                              className={`h-1 rounded-full transition-all duration-300 ${
+                                i === tourStep
+                                  ? "w-4 bg-primary"
+                                  : "w-1 bg-border-strong"
+                              }`}
+                            />
+                          ))}
+                        </span>
+                        <button
+                          onClick={() => setTourStep(null)}
+                          className="ml-auto text-xs text-muted transition-colors hover:text-white"
+                        >
+                          Exit
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {msg.actions.map((a) => (
+                          <button
+                            key={a.label}
+                            onClick={() => onAction(a)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border-low bg-elev-1 px-3 py-1.5 text-xs font-semibold text-white/90 transition-all duration-[--dur-micro] hover:-translate-y-px hover:border-primary/40 hover:bg-elev-2"
+                          >
+                            {a.label}
+                            {a.kind === "navigate" && (
+                              <ArrowRight className="h-3 w-3" />
+                            )}
+                          </button>
+                        ))}
+                        {location.pathname === "/" && (
+                          <button
+                            onClick={() => setTourStep(0)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-bold text-white transition-transform duration-[--dur-micro] hover:-translate-y-px"
+                          >
+                            Start the flow
+                            <ArrowRight className="h-3 w-3" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <div className="flex shrink-0 items-center gap-0.5">
-            <button
-              onClick={() => setOpen((o) => !o)}
-              aria-label={open ? "Collapse the guide" : "Expand the guide"}
-              className="rounded-lg p-1.5 text-muted transition-colors duration-[--dur-micro] hover:text-white"
-            >
-              <motion.span
-                animate={{ rotate: open ? 0 : 180 }}
-                className="block"
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button
+                onClick={() => setOpen((o) => !o)}
+                aria-label={open ? "Collapse the guide" : "Expand the guide"}
+                className="rounded-lg p-1.5 text-muted transition-colors duration-[--dur-micro] hover:text-white"
               >
-                <ChevronUp className="h-4 w-4 rotate-180" />
-              </motion.span>
-            </button>
-            <button
-              onClick={() => {
-                setHidden(true);
-                setTourStep(null);
-                try {
-                  sessionStorage.setItem(DISMISSED, "1");
-                } catch {
-                  /* modo privado: no persiste, no pasa nada */
-                }
-              }}
-              aria-label="Dismiss the guide"
-              className="rounded-lg p-1.5 text-muted transition-colors duration-[--dur-micro] hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </button>
+                <motion.span
+                  animate={{ rotate: open ? 0 : 180 }}
+                  className="block"
+                >
+                  <ChevronUp className="h-4 w-4 rotate-180" />
+                </motion.span>
+              </button>
+              <button
+                onClick={() => {
+                  setHidden(true);
+                  setTourStep(null);
+                  try {
+                    sessionStorage.setItem(DISMISSED, "1");
+                  } catch {
+                    /* modo privado: no persiste, no pasa nada */
+                  }
+                }}
+                aria-label="Dismiss the guide"
+                className="rounded-lg p-1.5 text-muted transition-colors duration-[--dur-micro] hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      </motion.aside>
-    </div>
+        </motion.aside>
+      </div>
+    </>
   );
 }
